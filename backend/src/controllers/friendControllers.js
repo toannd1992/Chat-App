@@ -1,0 +1,219 @@
+import mongoose from "mongoose";
+import FriendModel from "../models/FriendModel.js";
+import User from "../models/UserModel.js";
+import FriendRequestModel from "../models/FriendRequestModel.js";
+
+export const sendFriend = async (req, res) => {
+  try {
+    const { to, message } = req.body;
+    const from = req.user._id;
+
+    // check gửi tin nhắn cho chính minhg
+    if (from === to) {
+      return res
+        .status(400)
+        .json({ message: "không thể gửi lời mời kết bạn cho chính mình" });
+    }
+    // check người nhận có tồn tại không
+    const userTo = await User.exists({ _id: to });
+    if (!userTo) {
+      return res.status(404).json({ message: "Người dùng không tồn tại" });
+    }
+
+    // check xem đã là bạn chưa và đã có lời mời kết bạn chưa
+
+    let userA = from.toString();
+    let userB = to.toString();
+
+    if (userA > userB) {
+      [userA, userB] = [userB, userA];
+    }
+
+    const [alreadeFriend, existingRequest] = await Promise.all([
+      FriendModel.findOne({ userA, userB }),
+      FriendRequestModel.findOne({
+        $or: [
+          { from, to },
+          { from: to, to: from },
+        ],
+      }),
+    ]);
+
+    if (alreadeFriend) {
+      return res.status(400).json({ message: "Đã là bạn bè" });
+    }
+    if (existingRequest) {
+      return res.status(400).json({ message: "Đã có lời mời đang chờ " });
+    }
+    // tạo lời mời kết bạn
+
+    const request = await FriendRequestModel.create({
+      from,
+      to,
+      message,
+    });
+
+    return res
+      .status(200)
+      .json({ message: "Gửi lời mời kết bạn thành công", request });
+  } catch (error) {
+    console.error("lỗi khi gửi kết bạn", error);
+    return res.status(500).json({ message: "lỗi hệ thống" });
+  }
+};
+
+export const acceptFriendRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const userId = req.user._id;
+    //check id lời mời có đúng mẫu với mongoose không?
+    if (!mongoose.Types.ObjectId.isValid(requestId)) {
+      return res
+        .status(400)
+        .json({ message: "ID lời mời kết bạn không hợp lệ" });
+    }
+
+    const request = await FriendRequestModel.findById(requestId).exec();
+
+    // check lời mời kết bạn có trong FriendRequestModel không
+    if (!request) {
+      res.status(404).json({ message: "không tìm thấy lời mời kết bạn" });
+    }
+    // check người nhận lời mời thì mới đc chấp nhận
+
+    if (request.to.toString() !== userId.toString()) {
+      return res
+        .status(404)
+        .json({ message: "Bạn không có quyền chấp nhận lời mời" });
+    }
+    // tạo bạn bè
+
+    const friend = await FriendModel.create({
+      userA: request.from,
+      userB: request.to,
+    });
+    // xóa lời mời kết bạn trong db
+    await FriendRequestModel.findByIdAndDelete(requestId);
+    // lấy thông tin của người gửi
+
+    const from = await User.findById(request.from)
+      .select("_id displayName avatarUrl")
+      .lean();
+
+    res.status(200).json({ message: "Đã chấp nhận lời mời kết bạn", from });
+  } catch (error) {
+    console.error("lỗi khi đồng ý kết bạn", error);
+    return res.status(500).json({ message: "lỗi hệ thống" });
+  }
+};
+
+export const declineFriendRequest = async (req, res) => {
+  try {
+    // lây thông tin
+    const { requestId } = req.params;
+    const userId = req.user._id;
+
+    // id hợp lệ không
+    if (!mongoose.Types.ObjectId.isValid(requestId)) {
+      return res
+        .status(400)
+        .json({ message: "ID lời mời kết bạn không hợp lệ" });
+    }
+
+    //check đúng người gửi lời mời kết bạn
+    const request = await FriendRequestModel.findById(requestId);
+
+    if (!request) {
+      res.status(404).json({ message: "không tìm thấy lời mời kết bạn" });
+    }
+
+    if (request.to.toString() !== userId.toString()) {
+      return res
+        .status(400)
+        .json({ message: "Bạn không có quyền từ chối lời mời" });
+    }
+
+    // delete lời mời
+
+    await FriendRequestModel.findByIdAndDelete(requestId);
+    return res.status(200).json({ message: "Từ chối kết bạn thành công" });
+  } catch (error) {
+    console.error("lỗi khi từ chối kết bạn", error);
+    return res.status(500).json({ message: "lỗi hệ thống" });
+  }
+};
+
+export const getAllFriends = async (req, res) => {
+  try {
+    // lấy userId từ req.user
+    const userId = req.user._id;
+
+    // tìm trong db
+    const listFriends = await FriendModel.find({
+      $or: [{ userA: userId }, { userB: userId }],
+    })
+      .populate("userA", "_id, displayName, avatarUrl")
+      .populate("userB", "_id, displayName, avatarUrl")
+      .lean();
+
+    if (!listFriends.length) {
+      return res.status(400).json({ friends: [] });
+    }
+
+    const friends = listFriends.map((item) =>
+      item.userA._id.toString() === userId.toString() ? item.userB : item.userA
+    );
+
+    return res.status(200).json({ friends });
+
+    return res
+      .status(200)
+      .json({ message: "Lấy danh sách bạn bè thành công", listUser });
+  } catch (error) {
+    console.error("lỗi khi lấy danh sách kết bạn", error);
+    return res.status(500).json({ message: "lỗi hệ thống" });
+  }
+};
+
+export const getFriendsRequest = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // tìm lời mời trong db
+    const [requestFrom, requestTo] = await Promise.all([
+      FriendRequestModel.find({ from: userId }).populate(
+        "to",
+        "_id displayName avatarUrl"
+      ),
+      FriendRequestModel.find({ to: userId }).populate(
+        "from",
+        "_id displayName avatarUrl"
+      ),
+    ]);
+
+    // const requestFriend = await FriendRequestModel.find({
+    //   $or: [{ to: userId }, { from: userId }],
+    // })
+    //   .populate("from", "_id displayName avatarUrl")
+    //   .populate("to", "_id displayName avatarUrl");
+
+    // // return res.status(400).json({ requestFriend });
+    // if (!requestFriend.length) {
+    //   return res.status(400).json({ requestFrom: [], requestTo: [] });
+    // }
+
+    // const requestFrom = requestFriend.map((item) =>
+    //   item.from._id.toString() === userId.toString() ? item.to : item.from
+    // );
+    // const requestTo = requestFriend.map((item) =>
+    //   item.to._id.toString() === userId.toString() ? item.from : ""
+    // );
+
+    return res
+      .status(200)
+      .json({ requestFrom: requestFrom, requestTo: requestTo });
+  } catch (error) {
+    console.error("lỗi khi lấy danh sách yêu cầu kết bạn", error);
+    return res.status(500).json({ message: "lỗi hệ thống" });
+  }
+};
