@@ -20,7 +20,7 @@ export interface LastMessage {
   _id: string;
   content: string;
   createdAt: string;
-  senderId: UserInfo | string;
+  senderId: UserInfo;
 }
 
 export interface Conversation {
@@ -43,7 +43,7 @@ export interface ConversationResponse {
 export interface Message {
   _id: string;
   conversationId: string;
-  senderId: UserInfo | string;
+  senderId: UserInfo;
   content: string | null;
   imgUrl?: string | null;
   updatedAt?: string | null;

@@ -9,13 +9,19 @@ interface IsendDirectMess {
   recipientId: string;
   conversationId?: string;
   content: string;
-  imgUrl?: string;
+  imgUrl?: string | null;
 }
 
 interface IsendGroupMess {
   conversationId?: string;
   content: string;
-  imgUrl?: string;
+  imgUrl?: string | null;
+}
+
+interface ICreateGroup {
+  type: string;
+  name: string;
+  memberIds: string[];
 }
 const limit = 50;
 
@@ -54,5 +60,13 @@ export const chatServices = {
       imgUrl,
     });
     return res.data;
+  },
+  createGroup: async ({ type, name, memberIds }: ICreateGroup) => {
+    const res = await api.post(
+      "/conversation/",
+      { type, name, memberIds },
+      { withCredentials: true }
+    );
+    return res.data.conversation;
   },
 };

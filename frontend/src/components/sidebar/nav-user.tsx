@@ -1,10 +1,9 @@
-import { BadgeCheck, Bell, ChevronsUpDown } from "lucide-react";
+import { Bell, ChevronsUpDown, Settings, User } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -18,10 +17,17 @@ import {
 } from "@/components/ui/sidebar";
 import Logout from "../Logout";
 import type { typeUser } from "@/types/typeUser";
+import { useThemeStore } from "@/stores/useThemeStore";
 
 export function NavUser({ user }: { user: typeUser }) {
   const { isMobile } = useSidebar();
   const bgColor = !user.avatarUrl ? "bg-blue-500" : "";
+  const { setProfile } = useThemeStore();
+
+  const handleIsOpen = () => {
+    const isOpen = true;
+    setProfile(isOpen);
+  };
 
   return (
     <SidebarMenu>
@@ -72,19 +78,31 @@ export function NavUser({ user }: { user: typeUser }) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Tài khoản
+            <div className="flex flex-col gap-1 p-1">
+              <DropdownMenuItem
+                className="gap-2 cursor-pointer"
+                onClick={handleIsOpen} // Mở Modal khi click
+              >
+                <User size={15} className="text-muted-foreground" />
+                Tài Khoản
               </DropdownMenuItem>
 
-              <DropdownMenuItem>
-                <Bell />
+              <DropdownMenuItem className="gap-2 cursor-pointer">
+                <Bell size={15} className="text-muted-foreground" />
                 Thông báo
               </DropdownMenuItem>
-            </DropdownMenuGroup>
+
+              <DropdownMenuItem className="gap-2 cursor-pointer">
+                <Settings size={15} className="text-muted-foreground" />
+                Cài đặt
+              </DropdownMenuItem>
+            </div>
+
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer" variant="destructive">
+            <DropdownMenuItem
+              className="cursor-pointer p-1"
+              variant="destructive"
+            >
               <Logout />
             </DropdownMenuItem>
           </DropdownMenuContent>

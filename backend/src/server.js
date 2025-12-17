@@ -18,7 +18,8 @@ const PORT = process.env.PORT || 5001;
 
 // middlewares
 
-app.use(express.json()); // đọc json trên req.body
+app.use(express.json({ limit: "50mb" })); // đọc json trên req.body
+app.use(express.urlencoded({ limit: "50mb", extended: true })); // tăng giới hạn lên 50mb
 app.use(cookieParser()); // lấy cookie từ req
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 

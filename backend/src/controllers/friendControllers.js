@@ -15,6 +15,7 @@ export const sendFriend = async (req, res) => {
         .json({ message: "không thể gửi lời mời kết bạn cho chính mình" });
     }
     // check người nhận có tồn tại không
+
     const userTo = await User.exists({ _id: to });
     if (!userTo) {
       return res.status(404).json({ message: "Người dùng không tồn tại" });
@@ -52,7 +53,7 @@ export const sendFriend = async (req, res) => {
       to,
       message,
     });
-
+    await request.populate("to", "_id displayName avatarUrl email");
     return res
       .status(200)
       .json({ message: "Gửi lời mời kết bạn thành công", request });
@@ -142,6 +143,41 @@ export const declineFriendRequest = async (req, res) => {
     return res.status(500).json({ message: "lỗi hệ thống" });
   }
 };
+export const cancelFriendRequest = async (req, res) => {
+  try {
+    // lây thông tin
+    const { requestId } = req.params;
+    const userId = req.user._id;
+
+    // id hợp lệ không
+    if (!mongoose.Types.ObjectId.isValid(requestId)) {
+      return res
+        .status(400)
+        .json({ message: "ID lời mời kết bạn không hợp lệ" });
+    }
+
+    //check đúng người gửi lời mời kết bạn
+    const request = await FriendRequestModel.findById(requestId);
+
+    if (!request) {
+      res.status(404).json({ message: "không tìm thấy lời mời kết bạn" });
+    }
+
+    if (request.from.toString() !== userId.toString()) {
+      return res
+        .status(400)
+        .json({ message: "Bạn không có quyền hủy lời mời" });
+    }
+
+    // delete lời mời
+
+    await FriendRequestModel.findByIdAndDelete(requestId);
+    return res.status(200).json({ message: "Hủy lời mời kết bạn thành công" });
+  } catch (error) {
+    console.error("lỗi khi Hủy lời mời kết", error);
+    return res.status(500).json({ message: "lỗi hệ thống" });
+  }
+};
 
 export const getAllFriends = async (req, res) => {
   try {
@@ -152,8 +188,8 @@ export const getAllFriends = async (req, res) => {
     const listFriends = await FriendModel.find({
       $or: [{ userA: userId }, { userB: userId }],
     })
-      .populate("userA", "_id, displayName, avatarUrl")
-      .populate("userB", "_id, displayName, avatarUrl")
+      .populate("userA", "_id displayName avatarUrl")
+      .populate("userB", "_id displayName avatarUrl")
       .lean();
 
     if (!listFriends.length) {
@@ -165,10 +201,6 @@ export const getAllFriends = async (req, res) => {
     );
 
     return res.status(200).json({ friends });
-
-    return res
-      .status(200)
-      .json({ message: "Lấy danh sách bạn bè thành công", listUser });
   } catch (error) {
     console.error("lỗi khi lấy danh sách kết bạn", error);
     return res.status(500).json({ message: "lỗi hệ thống" });

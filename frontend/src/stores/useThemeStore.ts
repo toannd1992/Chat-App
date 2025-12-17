@@ -5,6 +5,9 @@ import { persist } from "zustand/middleware";
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
+      isOpenProfile: false,
+      isOpenAddFriend: false,
+      isOpenCreateGroup: false,
       isDark: false,
       toggleTheme: () => {
         const newValue = !get().isDark;
@@ -22,6 +25,15 @@ export const useThemeStore = create<ThemeState>()(
         } else {
           document.documentElement.classList.remove("dark");
         }
+      },
+      setProfile: (isOpen: boolean) => {
+        set({ isOpenProfile: isOpen });
+      },
+      setAddFriend: (isOpen: boolean) => {
+        set({ isOpenAddFriend: isOpen });
+      },
+      setCreateGroup: (isOpen: boolean) => {
+        set({ isOpenCreateGroup: isOpen });
       },
     }),
     {

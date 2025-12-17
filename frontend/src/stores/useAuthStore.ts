@@ -88,7 +88,33 @@ export const useAuthStore = create<typeStore>()(
           set({ loading: false });
         }
       },
-
+      updateAvatar: async (avatar) => {
+        try {
+          const { user } = await authServices.updateAvatar(avatar);
+          set({ user: user });
+          toast.success("Cập nhật ảnh đại diện thành công");
+        } catch (error) {
+          console.error("Lỗi khi update avatar", error);
+          toast.error("Lỗi cập nhật ảnh");
+        }
+      },
+      updateProfile: async (data) => {
+        try {
+          const { user } = await authServices.updateProfile(data);
+          set({ user: user });
+        } catch (error) {
+          console.error("Lỗi khi update profile", error);
+          toast.error("Lỗi cập nhật thông tin cá nhân");
+        }
+      },
+      seachUser: async (keyword) => {
+        try {
+          const userSearch = await authServices.seachUser(keyword);
+          return userSearch;
+        } catch (error) {
+          console.error("Lỗi khi tìm kiếm user", error);
+        }
+      },
       refreshStore: async () => {
         try {
           set({ loading: true });

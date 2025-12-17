@@ -19,11 +19,20 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    avartarUrL: {
+    avatarUrl: {
       type: String, //url hình ảnh cloud
     },
     avatarId: {
       type: String, // lưu id để xóa ảnh trên cloud
+    },
+    phone: {
+      type: String,
+    },
+    gender: {
+      type: String,
+    },
+    birthday: {
+      type: String,
     },
   },
   {

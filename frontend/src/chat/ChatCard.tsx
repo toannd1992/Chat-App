@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { formatOnlineTime, cn } from "@/lib/utils";
+import { Image } from "lucide-react";
 
 interface ChatCardProps {
   convoId: string;
@@ -56,7 +57,12 @@ const ChatCard = ({
           <div className="flex gap-2 ">
             {sender && <div className="">{`${sender}`}</div>}
 
-            <div className="truncate ">{subtitle}</div>
+            <div className="truncate flex gap-1 items-center ">
+              {subtitle === "Hình ảnh" && (
+                <Image className="size-4 flex text-muted-foreground" />
+              )}
+              {subtitle}
+            </div>
           </div>
         </div>
       </div>

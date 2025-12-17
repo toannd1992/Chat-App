@@ -27,7 +27,7 @@ const GroupAvatar = ({ participants, type }: GroupAvatarProps) => {
       type={type}
       name={participants.length.toString()}
       avatarUrl={undefined}
-      className="bg-gray"
+      color="bg-gray-300"
     />
   );
   return (

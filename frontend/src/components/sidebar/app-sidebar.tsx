@@ -18,10 +18,10 @@ import {
 } from "@/components/ui/sidebar";
 
 import { Switch } from "@/components/ui/switch";
-import CreateNewChat from "@/chat/CreateNewChat";
-import NewGroupChat from "@/chat/NewGroupChat";
+import NavChat from "@/chat/NavChat";
+import NewGroupChat from "@/components/modal/CreateGroupModal";
 import GroupChatList from "@/chat/GroupChatList";
-import AddFriend from "@/chat/AddFriend";
+
 import FriendList from "@/chat/FriendList";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -39,11 +39,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem>
+          <SidebarMenuItem className="flex flex-col gap-3">
             <SidebarMenuButton
               size="lg"
               asChild
-              className="bg-gradient-primary"
+              className="bg-gradient-primary "
             >
               <a href="#">
                 <div className="flex w-full items-center px-2 justify-between">
@@ -60,21 +60,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
               </a>
             </SidebarMenuButton>
+            <NavChat />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent className="beautiful-scrollbar">
-        {/* new chat */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <CreateNewChat />
-          </SidebarGroupContent>
-        </SidebarGroup>
         {/* group chat */}
         <SidebarGroup>
           <SidebarGroupLabel>Nhóm</SidebarGroupLabel>
           <SidebarGroupAction title="Tạo Nhóm" className="cursor-pointer">
-            <NewGroupChat />
+            +
           </SidebarGroupAction>
           <SidebarGroupContent>
             <GroupChatList />
@@ -84,7 +79,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarGroupLabel>Bạn bè</SidebarGroupLabel>
           <SidebarGroupAction title="Bạn bè" className="cursor-pointer">
-            <AddFriend />
+            +
           </SidebarGroupAction>
           <SidebarGroupContent>
             <FriendList />

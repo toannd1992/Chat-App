@@ -1,5 +1,8 @@
 import BodyMessage from "@/components/MessageChat/BodyMessage";
 import HeaderMessage from "@/components/MessageChat/HeaderMessage";
+import AddFriendModal from "@/components/modal/AddFriendModal";
+import CreateGroupModal from "@/components/modal/CreateGroupModal";
+import UserProfileModal from "@/components/modal/UserProfileModal";
 
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 
@@ -9,10 +12,19 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { useThemeStore } from "@/stores/useThemeStore";
 
 const ChatApp = () => {
+  const {
+    isOpenProfile,
+    setProfile,
+    isOpenAddFriend,
+    setAddFriend,
+    isOpenCreateGroup,
+    setCreateGroup,
+  } = useThemeStore();
   return (
-    <SidebarProvider className="w-full h-screen overflow-hidden  pb-2">
+    <SidebarProvider className="w-full h-screen overflow-hidden  pb-2 relative">
       <AppSidebar />
       <SidebarInset className="flex flex-col h-full overflow-hidden">
         {/* header */}
@@ -31,6 +43,18 @@ const ChatApp = () => {
           <BodyMessage />
         </div>
       </SidebarInset>
+      <UserProfileModal
+        isOpen={isOpenProfile}
+        onClose={() => setProfile(false)}
+      />
+      <AddFriendModal
+        isOpen={isOpenAddFriend}
+        onClose={() => setAddFriend(false)}
+      />
+      <CreateGroupModal
+        isOpen={isOpenCreateGroup}
+        onClose={() => setCreateGroup(false)}
+      />
     </SidebarProvider>
   );
 };

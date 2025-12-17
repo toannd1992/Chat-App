@@ -162,6 +162,23 @@ export const useChatStore = create<ChatState>()(
           ),
         }));
       },
+
+      createGroup: async (type, name, memberIds) => {
+        try {
+          const convsersation = await chatServices.createGroup({
+            type,
+            name,
+            memberIds,
+          });
+
+          set((state) => ({
+            conversations: [...state.conversations, convsersation],
+            activeConversationId: convsersation._id,
+          }));
+        } catch (error) {
+          console.error("Lỗi khi tạo nhóm chat", error);
+        }
+      },
     }),
     {
       name: "chat-storage",

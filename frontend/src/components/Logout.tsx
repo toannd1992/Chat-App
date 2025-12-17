@@ -16,7 +16,7 @@ const Logout = () => {
     }
   };
   return (
-    <div onClick={handleLogout} className="w-full flex gap-3">
+    <div onClick={handleLogout} className="p-2 w-full flex gap-3">
       <LogOut />
       Đăng Xuất
     </div>

@@ -94,11 +94,21 @@ const MessageItem = ({
         <Card
           className={cn(
             "p-2 px-3 rounded shadow-sm",
-            message.isOwn
-              ? "chat-bubble-sent border-0"
-              : "bg-chat-bubble-received"
+            message.isOwn && !message.imgUrl && "chat-bubble-sent border-0",
+            !message.isOwn && "bg-chat-bubble-received"
           )}
         >
+          {/* hiển thị ảnh */}
+          {message.imgUrl && (
+            <a href={message.imgUrl} target="_blank" rel="noopener noreferrer">
+              <img
+                className="w-40 h-auto  cursor-pointer"
+                src={message.imgUrl}
+                alt={message._id}
+              ></img>
+            </a>
+          )}
+          {/* hiển thị nội dung */}
           <p className="text-sm leading-relaxed break-words">
             {message.content}
           </p>

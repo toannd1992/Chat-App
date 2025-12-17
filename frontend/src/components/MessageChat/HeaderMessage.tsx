@@ -20,11 +20,11 @@ const HeaderMessage = () => {
     otherUser = convo?.participants.find(
       (item) => item.userId?._id !== user._id
     );
-    name = otherUser?.userId?.displayName;
+    name = otherUser?.userId?.displayName ?? "";
     if (!name) return null;
-    avatar = otherUser?.userId?.avatarUrl;
+    avatar = otherUser?.userId?.avatarUrl ?? "";
   } else {
-    name = convo.group?.name;
+    name = convo.group?.name ?? "";
   }
 
   return (

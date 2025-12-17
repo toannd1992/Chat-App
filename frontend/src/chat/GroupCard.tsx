@@ -22,7 +22,7 @@ const GroupCard = ({ convo }: { convo: Conversation }) => {
     convo._id.toString() === activeConversationId
       ? 0
       : convo.unreadCounts[user._id];
-  const name = convo.group?.name;
+  const name = convo.group?.name || "Group";
   const subtitle = convo.lastMessage?.content ?? "";
   const timestamp = convo.lastMessage?.createdAt
     ? new Date(convo.lastMessage.createdAt)

@@ -6,10 +6,17 @@ interface IUserAvatar {
   name: string;
   avatarUrl?: string;
   className?: string;
+  color?: string;
 }
 
-const UserAvatar = ({ type, name, avatarUrl, className }: IUserAvatar) => {
-  const bgColor = !avatarUrl ? "bg-blue-500" : "";
+const UserAvatar = ({
+  type,
+  name,
+  avatarUrl,
+  className,
+  color,
+}: IUserAvatar) => {
+  const bgColor = !avatarUrl && !color ? "bg-blue-500" : color;
   if (!name) {
     name = "OK";
   }
@@ -20,7 +27,7 @@ const UserAvatar = ({ type, name, avatarUrl, className }: IUserAvatar) => {
         type === "sidebar" && "size-12 text-base",
         type === "chat" && "size-8 text-sm",
         type === "group" && "size-6 text-sm",
-        type === "profile" && "size-24 text-3xl shadow-md"
+        type === "profile" && "size-20 text-3xl shadow-md"
       )}
     >
       <AvatarImage src={avatarUrl} alt={name} />

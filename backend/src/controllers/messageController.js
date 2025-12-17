@@ -2,18 +2,31 @@ import ConversationModel from "../models/ConversationModel.js";
 import MessageModel from "../models/MessageModel.js";
 import { emitMessage, updateConversation } from "../helpers/messageHelper.js";
 import { io } from "../socket/index.js";
+import cloudinary from "../libs/cloudinary.js";
 
 export const sendDirectMess = async (req, res) => {
   try {
-    const { recipientId, conversationId, content } = req.body;
+    const { recipientId, conversationId, content, imgUrl: image } = req.body;
     const senderId = req.user._id;
 
     let conversation;
-
-    if (!content) {
-      return res.status(400).json({ message: "Nội dung không thể để trống" });
+    // nếu k có conten và ảnh
+    if (!content && !image) {
+      return res.status(400).json({
+        message: "Nội dung và ảnh không thể để trống",
+        content,
+        image,
+      });
     }
-
+    // kiểm tra ảnh nếu có thì upload
+    let imgUrl = null;
+    let contentImg = "";
+    if (image) {
+      const upload = await cloudinary.uploader.upload(image);
+      imgUrl = upload.secure_url;
+      contentImg = "Hình ảnh";
+    }
+    // tim conversation
     if (conversationId) {
       conversation = await ConversationModel.findById(conversationId);
     }
@@ -30,7 +43,8 @@ export const sendDirectMess = async (req, res) => {
     const message = await MessageModel.create({
       conversationId: conversation._id,
       senderId,
-      content,
+      content: content || contentImg,
+      imgUrl,
     });
     await message.populate("senderId", "displayName avatarUrl email");
     // update lại conversation khi tin nhắn đc gửi
@@ -51,19 +65,29 @@ export const sendDirectMess = async (req, res) => {
 
 export const sendGroupMess = async (req, res) => {
   try {
-    const { conversationId, content } = req.body;
+    const { conversationId, content, imgUrl: image } = req.body;
 
     const senderId = req.user._id; //req.user._id;
     const conversation = req.conversation; // được lưu lại vào trong req từ middleware
-
-    if (!content) {
-      return res.status(400).json({ message: "Nội dung không thể để trống" });
+    console.log(image);
+    if (!content && !image) {
+      return res
+        .status(400)
+        .json({ message: "Nội dung và ảnh không thể để trống" });
     }
-
+    // kiểm tra ảnh nếu có thì upload
+    let imgUrl = null;
+    let contentImg = "";
+    if (image) {
+      const upload = await cloudinary.uploader.upload(image);
+      imgUrl = upload.secure_url;
+      contentImg = "Hình ảnh";
+    }
     const message = await MessageModel.create({
       conversationId,
       senderId,
-      content,
+      content: content || contentImg,
+      imgUrl,
     });
 
     await message.populate("senderId", "displayName avatarUrl email");

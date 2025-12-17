@@ -61,3 +61,10 @@ export const formatMessageTime = (date: Date) => {
     }/${date.getFullYear()} ${timeStr}`; // ví dụ: "15/12/2023 18:40"
   }
 };
+
+// Xử lý ngày sinh cho đẹp (DD/MM/YYYY)
+export const formatDate = (dateString?: string) => {
+  if (!dateString) return "Chưa cập nhật";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("vi-VN");
+};
