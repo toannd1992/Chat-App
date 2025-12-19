@@ -3,6 +3,7 @@ import DirectCard from "./DirectCard";
 
 const FriendList = () => {
   const { conversations } = useChatStore();
+
   if (!conversations) return null;
   const direct = conversations.filter((item) => item.type === "direct");
 

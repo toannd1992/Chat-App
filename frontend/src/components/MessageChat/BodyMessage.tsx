@@ -81,7 +81,7 @@ const BodyMessage = () => {
           <Spinner className="size-6" />
         </div>
       )}
-
+      {/* phần message */}
       <div
         ref={scrollRef}
         onScroll={handleScroll}

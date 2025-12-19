@@ -19,7 +19,7 @@ import {
 
 import { Switch } from "@/components/ui/switch";
 import NavChat from "@/chat/NavChat";
-import NewGroupChat from "@/components/modal/CreateGroupModal";
+
 import GroupChatList from "@/chat/GroupChatList";
 
 import FriendList from "@/chat/FriendList";
@@ -29,11 +29,24 @@ import { useChatStore } from "@/stores/useChatStore";
 import { useEffect } from "react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { isDark, toggleTheme } = useThemeStore();
+  const {
+    isDark,
+    toggleTheme,
+
+    setListFriend,
+    setCreateGroup,
+  } = useThemeStore();
   const { user } = useAuthStore();
   const { activeConversationId } = useChatStore();
 
   useEffect(() => {}, [activeConversationId]);
+  const handleIsOpenListFriend = () => {
+    setListFriend(true);
+  };
+
+  const handleIsOpenCreateGroup = () => {
+    setCreateGroup(true);
+  };
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -68,20 +81,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* group chat */}
         <SidebarGroup>
           <SidebarGroupLabel>Nhóm</SidebarGroupLabel>
-          <SidebarGroupAction title="Tạo Nhóm" className="cursor-pointer">
+          <SidebarGroupAction
+            onClick={handleIsOpenCreateGroup}
+            title="Tạo Nhóm"
+            className="cursor-pointer"
+          >
             +
           </SidebarGroupAction>
-          <SidebarGroupContent>
+          <SidebarGroupContent className="max-h-41 overflow-hidden overflow-y-auto beautiful-scrollbar">
             <GroupChatList />
           </SidebarGroupContent>
         </SidebarGroup>
         {/* Bạn bè */}
         <SidebarGroup>
           <SidebarGroupLabel>Bạn bè</SidebarGroupLabel>
-          <SidebarGroupAction title="Bạn bè" className="cursor-pointer">
+          <SidebarGroupAction
+            onClick={handleIsOpenListFriend}
+            title="Bạn bè"
+            className="cursor-pointer "
+          >
             +
           </SidebarGroupAction>
-          <SidebarGroupContent>
+          <SidebarGroupContent className="max-h-70 overflow-hidden overflow-y-auto beautiful-scrollbar">
             <FriendList />
           </SidebarGroupContent>
         </SidebarGroup>

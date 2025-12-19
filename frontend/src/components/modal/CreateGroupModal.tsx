@@ -43,7 +43,7 @@ const CreateGroupModal = ({ isOpen, onClose }: CreateGroupModalProps) => {
   const handleCreateGroup = async () => {
     const type = "group";
     try {
-      await createGroup(type, nameGroup, memberIds);
+      await createGroup(type, memberIds, nameGroup);
     } catch (error) {
       console.error(error);
     } finally {
@@ -80,33 +80,40 @@ const CreateGroupModal = ({ isOpen, onClose }: CreateGroupModalProps) => {
 
           <ScrollArea className="h-56 rounded border p-2">
             <div className="space-y-2 ">
-              {friends.map((user) => (
-                <div
-                  key={user._id}
-                  className={cn(
-                    "flex items-center  justify-start gap-4 border rounded p-1 pl-4 hover:bg-muted",
-                    memberIds.includes(user._id) && "bg-muted-foreground/30"
-                  )}
-                >
-                  <Checkbox
-                    checked={memberIds.includes(user._id)}
-                    onCheckedChange={() => toggleUser(user._id)}
-                    className="cursor-pointer hover:border"
-                  />
-                  <div className="flex items-center gap-3 flex-1">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={user.avatarUrl} />
-                      <AvatarFallback>
-                        {user.displayName.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
+              {friends.length > 0 ? (
+                friends.map((user) => (
+                  <div
+                    key={user._id}
+                    className={cn(
+                      "flex items-center  justify-start gap-4 border rounded p-1 pl-4 hover:bg-muted",
+                      memberIds.includes(user._id) && "bg-muted-foreground/30"
+                    )}
+                  >
+                    <Checkbox
+                      checked={memberIds.includes(user._id)}
+                      onCheckedChange={() => toggleUser(user._id)}
+                      className="cursor-pointer hover:border"
+                    />
+                    <div className="flex items-center gap-3 flex-1">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={user.avatarUrl} />
+                        <AvatarFallback>
+                          {user.displayName.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
 
-                    <span className="text-xs font-medium flex-1 truncate max-w-60  ">
-                      {user.displayName}
-                    </span>
+                      <span className="text-xs font-medium flex-1 truncate max-w-60  ">
+                        {user.displayName}
+                      </span>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="flex items-center justify-center text-muted-foreground  p-2 text-sm ">
+                  Chưa có bạn bè nào trong danh sách, Vui lòng kết bạn để tạo
+                  nhóm!"
                 </div>
-              ))}
+              )}
             </div>
           </ScrollArea>
         </div>

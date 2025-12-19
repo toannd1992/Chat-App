@@ -8,6 +8,7 @@ export const useThemeStore = create<ThemeState>()(
       isOpenProfile: false,
       isOpenAddFriend: false,
       isOpenCreateGroup: false,
+      isOpenListFriend: false,
       isDark: false,
       toggleTheme: () => {
         const newValue = !get().isDark;
@@ -34,6 +35,9 @@ export const useThemeStore = create<ThemeState>()(
       },
       setCreateGroup: (isOpen: boolean) => {
         set({ isOpenCreateGroup: isOpen });
+      },
+      setListFriend: (isOpen: boolean) => {
+        set({ isOpenListFriend: isOpen });
       },
     }),
     {

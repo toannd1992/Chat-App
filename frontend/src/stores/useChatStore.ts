@@ -156,19 +156,38 @@ export const useChatStore = create<ChatState>()(
         }
       },
       updateConversation: async (conversation) => {
+        set((state) => {
+          //kiểm tra đã có cuộc hội thoại chưa
+          const isExist = state.conversations.some(
+            (c) => c._id === conversation._id
+          );
+          if (isExist) {
+            // nếu có thì mới update
+            return {
+              conversations: state.conversations.map((c) =>
+                c._id === conversation._id ? { ...c, ...conversation } : c
+              ),
+            };
+          } else {
+            // nếu chưa có thì thêm mới khi chấp nhận kết bạn
+            return { conversations: [...state.conversations, conversation] };
+          }
+        });
+      },
+      removeConversation: (conversation) => {
         set((state) => ({
-          conversations: state.conversations.map((c) =>
-            c._id === conversation._id ? { ...c, ...conversation } : c
+          conversations: state.conversations.filter(
+            (c) => c._id !== conversation._id
           ),
         }));
       },
 
-      createGroup: async (type, name, memberIds) => {
+      createGroup: async (type, memberIds, name) => {
         try {
           const convsersation = await chatServices.createGroup({
             type,
-            name,
             memberIds,
+            name,
           });
 
           set((state) => ({

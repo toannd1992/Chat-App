@@ -1,12 +1,21 @@
 import { friendServices } from "@/services/friendServices";
 import type { FriendState } from "@/types/typeStore";
 import { create } from "zustand";
+import { useChatStore } from "./useChatStore";
 
 export const useFriendStore = create<FriendState>((set, get) => ({
   requestFrom: [],
   requestTo: [],
   friends: [],
   loading: false,
+  reset: () => {
+    set({
+      requestFrom: [],
+      requestTo: [],
+      friends: [],
+      loading: false,
+    });
+  },
   setRequest: (id) =>
     set((state) => ({
       requestTo: state.requestTo.filter((item) => item._id !== id),
@@ -36,7 +45,12 @@ export const useFriendStore = create<FriendState>((set, get) => ({
   acceptFriend: async (id) => {
     try {
       set({ loading: true });
-      await friendServices.acceptFriend(id);
+      const { conversation, from } = await friendServices.acceptFriend(id);
+      useChatStore.getState().updateConversation(conversation);
+      useChatStore.getState().setActiveConversation(conversation._id);
+      set((state) => ({
+        friends: [...state.friends, from],
+      }));
     } catch (error) {
       console.log(error);
     } finally {
@@ -69,6 +83,23 @@ export const useFriendStore = create<FriendState>((set, get) => ({
       const res = await friendServices.getAllFriend();
 
       set({ friends: res.friends });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      set({ loading: false });
+    }
+  },
+  deleteFriend: async (id) => {
+    try {
+      set({ loading: true });
+      const { id: otherId, conversation } = await friendServices.deleteFriend(
+        id
+      );
+      useChatStore.getState().removeConversation(conversation);
+
+      set((state) => ({
+        friends: state.friends.filter((f) => f._id !== otherId),
+      }));
     } catch (error) {
       console.log(error);
     } finally {

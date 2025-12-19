@@ -20,8 +20,9 @@ interface IsendGroupMess {
 
 interface ICreateGroup {
   type: string;
-  name: string;
+
   memberIds: string[];
+  name?: string;
 }
 const limit = 50;
 
@@ -61,10 +62,10 @@ export const chatServices = {
     });
     return res.data;
   },
-  createGroup: async ({ type, name, memberIds }: ICreateGroup) => {
+  createGroup: async ({ type, memberIds, name }: ICreateGroup) => {
     const res = await api.post(
       "/conversation/",
-      { type, name, memberIds },
+      { type, memberIds, name },
       { withCredentials: true }
     );
     return res.data.conversation;

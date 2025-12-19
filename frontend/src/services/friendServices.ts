@@ -35,4 +35,10 @@ export const friendServices = {
     const res = await api.get("friend/all", { withCredentials: true });
     return res.data;
   },
+  deleteFriend: async (id: string) => {
+    const res = await api.post(`friend/requests/${id}/delete`, {
+      withCredentials: true,
+    });
+    return res.data;
+  },
 };

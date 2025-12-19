@@ -1,6 +1,6 @@
 import { useAuthStore } from "@/stores/useAuthStore";
 import type { Conversation } from "@/types/typeChat";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { ImagePlus, Send, X } from "lucide-react";
@@ -11,9 +11,15 @@ import { toast } from "sonner";
 const InputMessage = ({ conversation }: { conversation: Conversation }) => {
   const { user } = useAuthStore();
   const [value, setValue] = useState<string>("");
-  const { sendDirectMessStore, sendGroupMessStore } = useChatStore();
+  const { activeConversationId, sendDirectMessStore, sendGroupMessStore } =
+    useChatStore();
   const [imgView, setImgView] = useState<string | null>(null); // tạo state để quản lý ảnh
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputMessage = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputMessage.current?.focus();
+  }, [activeConversationId]);
 
   if (!user) return;
 
@@ -122,6 +128,7 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
         <div className="flex-1 relative flex gap-1">
           <Input
             value={value}
+            ref={inputMessage}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={enter}
             placeholder={`Nhập @, tin nhắn tới ${name}`}

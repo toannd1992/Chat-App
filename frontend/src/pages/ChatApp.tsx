@@ -2,6 +2,7 @@ import BodyMessage from "@/components/MessageChat/BodyMessage";
 import HeaderMessage from "@/components/MessageChat/HeaderMessage";
 import AddFriendModal from "@/components/modal/AddFriendModal";
 import CreateGroupModal from "@/components/modal/CreateGroupModal";
+import ListFriendModel from "@/components/modal/ListFriendModel";
 import UserProfileModal from "@/components/modal/UserProfileModal";
 
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
@@ -22,6 +23,8 @@ const ChatApp = () => {
     setAddFriend,
     isOpenCreateGroup,
     setCreateGroup,
+    setListFriend,
+    isOpenListFriend,
   } = useThemeStore();
   return (
     <SidebarProvider className="w-full h-screen overflow-hidden  pb-2 relative">
@@ -54,6 +57,10 @@ const ChatApp = () => {
       <CreateGroupModal
         isOpen={isOpenCreateGroup}
         onClose={() => setCreateGroup(false)}
+      />
+      <ListFriendModel
+        isOpen={isOpenListFriend}
+        onClose={() => setListFriend(false)}
       />
     </SidebarProvider>
   );

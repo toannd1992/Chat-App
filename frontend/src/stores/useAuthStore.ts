@@ -4,6 +4,7 @@ import type { typeStore } from "@/types/typeStore";
 import { authServices } from "@/services/authServices";
 import { persist } from "zustand/middleware";
 import { useChatStore } from "./useChatStore";
+import { useFriendStore } from "./useFriendStore";
 
 export const useAuthStore = create<typeStore>()(
   persist(
@@ -44,6 +45,7 @@ export const useAuthStore = create<typeStore>()(
           set({ loading: true });
           localStorage.clear(); // xóa localStorage khi đăng nhập
           useChatStore.getState().reset(); //reset chatStore
+          useFriendStore.getState().reset();
 
           const { accessToken, message } = await authServices.signIn(
             email,

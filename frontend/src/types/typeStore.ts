@@ -35,9 +35,11 @@ export interface FriendState {
   requestTo: FriendRequest[];
   friends: typeUser[];
   loading: boolean;
+  reset: () => void;
   sendFriend: (recipientId: string, message: string) => Promise<void>;
   getFriendRequests: () => Promise<void>;
   acceptFriend: (id: string) => Promise<void>;
+  deleteFriend: (id: string) => Promise<void>;
   declineFriend: (id: string) => Promise<void>;
   setRequest: (id: string) => void;
   cancelFriend: (id: string) => Promise<void>;
@@ -48,12 +50,14 @@ export interface ThemeState {
   isOpenProfile: boolean;
   isOpenAddFriend: boolean;
   isOpenCreateGroup: boolean;
+  isOpenListFriend: boolean;
   isDark: boolean;
   toggleTheme: () => void;
   setTheme: (dark: boolean) => void;
   setProfile: (isOpen: boolean) => void;
   setAddFriend: (isOpen: boolean) => void;
   setCreateGroup: (isOpen: boolean) => void;
+  setListFriend: (isOpen: boolean) => void;
 }
 
 export interface ChatState {
@@ -70,6 +74,7 @@ export interface ChatState {
   loading: boolean;
   loadingMessage: boolean;
   reset: () => void;
+  removeConversation: (conversation: Conversation) => void;
   setActiveConversation: (id: string | null) => void;
   fetchConversations: () => Promise<void>;
   fetchMessages: (conversationId?: string) => Promise<void>;
@@ -90,8 +95,8 @@ export interface ChatState {
   updateConversation: (conversation: Conversation) => void;
   createGroup: (
     type: string,
-    name: string,
-    memberIds: string[]
+    memberIds: string[],
+    name?: string
   ) => Promise<void>;
 }
 

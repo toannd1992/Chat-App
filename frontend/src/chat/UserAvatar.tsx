@@ -20,6 +20,7 @@ const UserAvatar = ({
   if (!name) {
     name = "OK";
   }
+
   return (
     <Avatar
       className={cn(
@@ -30,7 +31,8 @@ const UserAvatar = ({
         type === "profile" && "size-20 text-3xl shadow-md"
       )}
     >
-      <AvatarImage src={avatarUrl} alt={name} />
+      <AvatarImage src={avatarUrl || undefined} alt={name || "avartar"} />
+
       <AvatarFallback className={`${bgColor} text-white font-semibold`}>
         {name.charAt(0)}
       </AvatarFallback>

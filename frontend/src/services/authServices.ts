@@ -69,6 +69,7 @@ export const authServices = {
     const res = await api.get(`/users/search?keyword=${keyword}`, {
       withCredentials: true,
     });
-    return res.data.otherUser;
+
+    return res.data.user;
   },
 };

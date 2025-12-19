@@ -1,4 +1,3 @@
-import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -8,23 +7,97 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useThemeStore } from "@/stores/useThemeStore";
-import { Avatar } from "@radix-ui/react-avatar";
-import { Search, UserPlus2, Users2 } from "lucide-react";
-import { useState } from "react";
+
+import { Search, UserPlus2, Users2, X } from "lucide-react";
+import { useState, useMemo } from "react";
+import { useChatStore } from "@/stores/useChatStore";
+import { useAuthStore } from "@/stores/useAuthStore";
+import type { Conversation, Participant } from "@/types/typeChat";
+import ChatCard from "./ChatCard";
+import UserAvatar from "./UserAvatar";
+import GroupAvatar from "./GroupAvatar";
 
 const NavChat = () => {
   const { setAddFriend, setCreateGroup } = useThemeStore();
+  const {
+    conversations,
+    setActiveConversation,
+    activeConversationId,
+    messages,
+    fetchMessages,
+  } = useChatStore(); // Lấy danh sách chat
+  const { user } = useAuthStore(); // Lấy user hiện tại để lọc tên đối phương
+
   const [value, setValue] = useState("");
   const [open, setOpen] = useState(false);
+
   const handleIsOpenAddFriend = () => {
-    const isOpen = true;
-    setAddFriend(isOpen);
+    setAddFriend(true);
   };
 
   const handleIsOpenCreateGroup = () => {
-    const isOpen = true;
-    setCreateGroup(isOpen);
+    setCreateGroup(true);
   };
+
+  // lọc dữ liệu từ conversations
+  const filteredConversations = useMemo(() => {
+    if (!value.trim()) return []; // k nhập trả về rỗng
+
+    return conversations.filter((convo) => {
+      let name = "";
+
+      // lọc group
+      if (convo.type === "group") {
+        name = convo.group?.name || "";
+      }
+      // direct tìm người còn lại
+      else {
+        const otherParticipant = convo.participants.find(
+          (p) => p.userId?._id !== user?._id
+        );
+        name = otherParticipant?.userId?.displayName || "";
+      }
+
+      //  không phân biệt hoa thường
+      return name.toLowerCase().includes(value.toLowerCase());
+    });
+  }, [conversations, value, user]);
+
+  //  click vào kết quả tìm kiếm
+
+  const handleSelect = async (id: string) => {
+    setActiveConversation(id);
+    setOpen(false); // đóng popover
+    setValue("");
+    if (!messages[id]) {
+      await fetchMessages(id); // lay tin nham khi lick vao hoi thoai
+    }
+  };
+
+  //  lấy thông tin hiển thị
+  const getInfo = (convo: Conversation) => {
+    if (convo.type === "group") {
+      return {
+        name: convo.group?.name ?? "",
+        subtitle: convo.lastMessage?.content,
+        timestamp: convo.lastMessage?.createdAt
+          ? new Date(convo.lastMessage.createdAt)
+          : undefined,
+      };
+    }
+    const otherUser = convo.participants.find(
+      (p: Participant) => p.userId?._id !== user?._id
+    );
+    return {
+      name: otherUser?.userId?.displayName ?? "",
+      subtitle: convo.lastMessage?.content ?? "",
+      timestamp: convo.lastMessage?.createdAt
+        ? new Date(convo.lastMessage.createdAt)
+        : undefined,
+      avatarUrl: otherUser?.userId?.avatarUrl ?? undefined,
+    };
+  };
+
   return (
     <div className="relative flex items-center gap-1">
       <Popover open={open} onOpenChange={setOpen}>
@@ -33,47 +106,65 @@ const NavChat = () => {
             <Search className="absolute top-2.5 left-2.5 text-muted-foreground size-4" />
             <Input
               value={value}
-              onChange={(e) => setValue(e.target.value)}
+              onChange={(e) => {
+                setValue(e.target.value);
+                if (!open) setOpen(true); //  mở popover khi gõ
+              }}
               onClick={() => setOpen(true)}
-              placeholder="Tìm kiếm"
-              className="pl-8 rounded "
-            ></Input>
+              placeholder="Tìm kiếm nhóm, bạn bè..."
+              className="pl-8 rounded"
+            />
+            {value && (
+              <X
+                onClick={() => setValue("")}
+                className="absolute top-2.5 right-2.5 text-muted-foreground size-4 bg-muted hover:bg-muted-foreground/20 cursor-pointer"
+              />
+            )}
           </div>
         </PopoverTrigger>
+
         <PopoverContent
           onOpenAutoFocus={(e) => e.preventDefault()}
-          className="w-90 rounded "
+          className="w-90 p-0 rounded-md" //
+          align="start"
         >
-          <ScrollArea className="h-56 rounded border p-2">
-            {/* <div className="space-y-2 ">
-              {friends.map((user) => (
-                <div
-                  key={user._id}
-                  className={cn(
-                    "flex items-center  justify-start gap-4 border rounded p-1 pl-4 hover:bg-muted",
-                    memberIds.includes(user._id) && "bg-muted-foreground/30"
-                  )}
-                >
-                  <Checkbox
-                    checked={memberIds.includes(user._id)}
-                    onCheckedChange={() => toggleUser(user._id)}
-                    className="cursor-pointer hover:border"
-                  />
-                  <div className="flex items-center gap-3 flex-1">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={user.avatarUrl} />
-                      <AvatarFallback>
-                        {user.displayName.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-
-                    <span className="text-xs font-medium flex-1 truncate max-w-60  ">
-                      {user.displayName}
-                    </span>
-                  </div>
+          <ScrollArea className="h-full">
+            <div className="p-2 flex flex-col gap-1">
+              {filteredConversations.length > 0 ? (
+                filteredConversations.map((convo) => {
+                  const info = getInfo(convo);
+                  return (
+                    <ChatCard
+                      key={convo._id}
+                      convoId={convo._id}
+                      name={info.name}
+                      timestamp={info.timestamp}
+                      subtitle={info.subtitle}
+                      isActive={activeConversationId === convo._id}
+                      onSelect={handleSelect}
+                      leftSection={
+                        convo.type === "direct" ? (
+                          <UserAvatar
+                            type="sidebar"
+                            name={info.name}
+                            avatarUrl={info.avatarUrl}
+                          />
+                        ) : (
+                          <GroupAvatar
+                            participants={convo.participants}
+                            type="group"
+                          />
+                        )
+                      }
+                    />
+                  );
+                })
+              ) : (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  {value ? "Không tìm thấy kết quả" : "Nhập tên để tìm kiếm"}
                 </div>
-              ))}
-            </div> */}
+              )}
+            </div>
           </ScrollArea>
         </PopoverContent>
       </Popover>
@@ -83,6 +174,7 @@ const NavChat = () => {
           onClick={handleIsOpenAddFriend}
           variant="ghost"
           className="rounded cursor-pointer"
+          title="Thêm bạn"
         >
           <UserPlus2 className="size-4" />
         </Button>
@@ -90,6 +182,7 @@ const NavChat = () => {
           onClick={handleIsOpenCreateGroup}
           variant="ghost"
           className="rounded cursor-pointer"
+          title="Tạo nhóm"
         >
           <Users2 className="size-4" />
         </Button>

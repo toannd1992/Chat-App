@@ -104,6 +104,7 @@ const AddFriendModal = ({ isOpen, onClose }: AddFriendModalProps) => {
     try {
       await acceptFriend(id);
       setRequest(id);
+      onClose();
     } catch (error) {
       console.error(error);
     }
@@ -143,7 +144,7 @@ const AddFriendModal = ({ isOpen, onClose }: AddFriendModalProps) => {
               Tìm bạn
             </TabsTrigger>
             <TabsTrigger value="request" className="rounded cursor-pointer">
-              Lời mời
+              Lời mời ({requestTo.length})
             </TabsTrigger>
           </TabsList>
 
@@ -192,17 +193,37 @@ const AddFriendModal = ({ isOpen, onClose }: AddFriendModalProps) => {
                         </span>
                       </div>
                     </div>
-                    {currentUser?._id !== userResult._id && (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className=" rounded text-xs h-8 px-3 cursor-pointer hover:bg-blue-100 "
-                        onClick={handleAddFriend}
-                      >
-                        <UserPlus size={16} className="mr-1" />
-                        Kết bạn
-                      </Button>
-                    )}
+                    <div className="flex justify-end"></div>
+                    {currentUser?._id !== userResult._id &&
+                      (userResult.friend ? (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled
+                          className="rounded text-xs h-8 px-3 hover:bg-blue-100 "
+                        >
+                          Đã là bạn bè
+                        </Button>
+                      ) : userResult.request ? (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled
+                          className=" rounded text-xs h-8 px-3  hover:bg-blue-100 "
+                        >
+                          Đã có lời mời đang chờ chấp nhận
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className=" rounded text-xs h-8 px-3 cursor-pointer hover:bg-blue-100 "
+                          onClick={handleAddFriend}
+                        >
+                          <UserPlus size={16} className="mr-1" />
+                          Kết bạn
+                        </Button>
+                      ))}
                   </Card>
                 </div>
               ) : (

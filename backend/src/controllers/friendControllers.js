@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import FriendModel from "../models/FriendModel.js";
 import User from "../models/UserModel.js";
 import FriendRequestModel from "../models/FriendRequestModel.js";
+import ConversationModel from "../models/ConversationModel.js";
 
 export const sendFriend = async (req, res) => {
   try {
@@ -9,7 +10,7 @@ export const sendFriend = async (req, res) => {
     const from = req.user._id;
 
     // check gửi tin nhắn cho chính minhg
-    if (from === to) {
+    if (from.toString() === to.toString()) {
       return res
         .status(400)
         .json({ message: "không thể gửi lời mời kết bạn cho chính mình" });
@@ -68,6 +69,7 @@ export const acceptFriendRequest = async (req, res) => {
     const { requestId } = req.params;
     const userId = req.user._id;
     //check id lời mời có đúng mẫu với mongoose không?
+
     if (!mongoose.Types.ObjectId.isValid(requestId)) {
       return res
         .status(400)
@@ -101,7 +103,42 @@ export const acceptFriendRequest = async (req, res) => {
       .select("_id displayName avatarUrl")
       .lean();
 
-    res.status(200).json({ message: "Đã chấp nhận lời mời kết bạn", from });
+    // check trước khi tạo tránh tạo thêm
+
+    const existed = await ConversationModel.findOne({
+      type: "direct",
+      participants: {
+        $all: [
+          { $elemMatch: { userId } },
+          { $elemMatch: { userId: from._id } },
+        ],
+      },
+    });
+
+    if (existed) return existed;
+
+    // tạo conversation khi đã là bạn bè
+    const conversation = await ConversationModel.create({
+      type: "direct",
+      participants: [{ userId }, { userId: from._id }],
+    });
+    // pupulate thông tin
+    await conversation.populate([
+      {
+        path: "participants.userId",
+        select: "displayName avatarUrl",
+      },
+      {
+        path: "seenBy",
+        select: "displayName avatarUrl",
+      },
+      {
+        path: "lastMessage.senderId",
+        select: "displayName avatarUrl",
+      },
+    ]);
+
+    res.status(200).json({ conversation, from });
   } catch (error) {
     console.error("lỗi khi đồng ý kết bạn", error);
     return res.status(500).json({ message: "lỗi hệ thống" });
@@ -246,6 +283,34 @@ export const getFriendsRequest = async (req, res) => {
       .json({ requestFrom: requestFrom, requestTo: requestTo });
   } catch (error) {
     console.error("lỗi khi lấy danh sách yêu cầu kết bạn", error);
+    return res.status(500).json({ message: "lỗi hệ thống" });
+  }
+};
+
+export const deleteFriend = async (req, res) => {
+  try {
+    const userA = req.user._id.toString();
+    const { id } = req.params;
+    console.log(userA);
+    console.log(id);
+    const PairHelper = (a, b) => {
+      return a < b ? { userA: a, userB: b } : { userA: b, userB: a };
+    };
+    const pair = PairHelper(userA, id);
+    // xóa trong db
+    const friend = await FriendModel.findOneAndDelete(pair);
+    if (!friend) {
+      return res.status(404).json({ message: "Không phải là bạn bè" });
+    }
+    // tìm kiếm cuộc hội thoại và xóa luôn
+    const conversation = await ConversationModel.findOne({
+      type: "direct",
+      "participants.userId": { $all: [userA, id] },
+    });
+
+    return res.status(200).json({ id, conversation });
+  } catch (error) {
+    console.error("lỗi khi hủy kết bạn", error);
     return res.status(500).json({ message: "lỗi hệ thống" });
   }
 };

@@ -8,6 +8,8 @@ export interface typeUser {
   avatarUrl?: string;
   createAt?: string;
   updateAt?: string;
+  friend?: boolean;
+  request?: boolean;
 }
 
 export interface Friend {
