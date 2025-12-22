@@ -14,6 +14,7 @@ const BodyMessage = () => {
   const mess = useMemo(() => {
     return messages[activeConversationId!]?.items ?? [];
   }, [messages, activeConversationId]);
+
   const hasMore = messages[activeConversationId!]?.hasMore;
   const convo = conversations.find((item) => item._id === activeConversationId);
 
@@ -28,48 +29,50 @@ const BodyMessage = () => {
   }
 
   // sử dụng useRef để đến đểm cuối của khung message
-  const bottomRef = useRef<HTMLDivElement>(null); // thẻ div cuối tin nhắn
-  const scrollRef = useRef<HTMLDivElement>(null); // khung massage
 
+  const scrollRef = useRef<HTMLDivElement>(null); // khung massage
   useEffect(() => {
-    // cuộn xuống cuối khi có tin nhắn mới và khi không tải tin nhắn mới
-    if (bottomRef.current && mess.length > 0 && !loading) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    const container = scrollRef.current;
+
+    // không có container, không có tin nhắn hoặc đang loading thì bỏ qua
+    if (!container || mess.length === 0 || loading) return;
+
+    // lấy tin nhắn mới nhất
+
+    const latestMessage = mess[mess.length - 1];
+
+    // kiểm tra xem tin nhắn đó có phải của mình không
+    const isMine = latestMessage?.senderId?._id === user?._id;
+
+    // kiểm tra xem người dùng có đang đứng gần đáy 100px
+    const isNearBottom = Math.abs(container.scrollTop) < 100;
+    // nếu tin của mình thì cuộn xuống
+    if (isMine || isNearBottom) {
+      container.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
     }
-  }, [mess, activeConversationId]);
+  }, [mess, activeConversationId, user?._id]);
 
   // hàm scroll để fetch message mới
 
   const handleScroll = async () => {
     const container = scrollRef.current;
-    if (!container) return;
+    if (!container || !hasMore || loading) return;
 
-    // cuộn lên top = 0 và còn tin nhắn cũ thì
-    if (container.scrollTop === 0 && hasMore && !loading) {
-      setLoading(true); // đang tải tin nhắn
-      const oldHeightContainer = container.scrollHeight; // chiều cao khung khi chưa có tin mới
+    const scrollPosition = Math.abs(container.scrollTop);
+    const isAtTop =
+      container.scrollHeight - container.clientHeight - scrollPosition <= 50;
 
+    if (isAtTop) {
+      setLoading(true);
       await fetchMessages(activeConversationId!);
-      // tính toán vị trí cuộn và setTimeout 0 để DOM update
-      setTimeout(() => {
-        if (container) {
-          const newHeightContainer = container.scrollHeight;
-          //cuộn xuống đúng chỗ chiều cao mới - chiều cao cũ
-          container.scrollTop = newHeightContainer - oldHeightContainer;
-        }
-        // khi gọi api xong thì set loading về false
-        setLoading(false);
-      }, 0);
+
+      setLoading(false);
     }
   };
 
-  if (!mess) {
-    return (
-      <div className="flex h-full items-center justify-center text-muted-foreground">
-        Chưa có tin nhắn nào trong cuộc trò chuyện này
-      </div>
-    );
-  }
   if (!convo) return;
 
   return (
@@ -85,12 +88,12 @@ const BodyMessage = () => {
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 beautiful-scrollbar p-4 bg-primary-foreground overflow-y-auto "
+        className="flex-1 beautiful-scrollbar p-4 bg-primary-foreground overflow-y-auto flex flex-col-reverse"
       >
         <div className="flex flex-col gap-2">
           {mess.map((item, index) => (
             <MessageItem
-              key={index}
+              key={item._id}
               message={item}
               index={index}
               convo={convo}
@@ -98,9 +101,13 @@ const BodyMessage = () => {
               lastMessageStatus={lastMessageStatus}
             />
           ))}
-          <div ref={bottomRef} />
         </div>
       </div>
+      {mess.length === 0 && (
+        <div className="flex h-full items-center justify-center text-muted-foreground">
+          Chưa có tin nhắn nào trong cuộc trò chuyện này. Hãy trò chuyện ngay
+        </div>
+      )}
       {/* input */}
       <div className="p-2 border-t ">
         <InputMessage conversation={convo} />

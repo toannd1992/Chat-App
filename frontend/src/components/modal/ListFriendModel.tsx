@@ -49,12 +49,13 @@ const ListFriendModel = ({ isOpen, onClose }: ListFriendModalProps) => {
   const id = useRef<string | null>(null);
 
   const { friends, getAllFriend, deleteFriend } = useFriendStore();
-  const { setActiveConversation, conversations } = useChatStore.getState();
+  const { setActiveConversation, conversations, fetchMessages } =
+    useChatStore.getState();
   useEffect(() => {
     getAllFriend();
   }, []);
 
-  const handleClickFriend = (id: string) => {
+  const handleClickFriend = async (id: string) => {
     // lọc conversation để tìm conversationId
 
     const conversation = conversations.find(
@@ -64,6 +65,8 @@ const ListFriendModel = ({ isOpen, onClose }: ListFriendModalProps) => {
     if (conversation) {
       //set lại activeconversation
       setActiveConversation(conversation._id);
+
+      await fetchMessages(conversation._id); // lay tin nham khi lick vao hoi thoai
     }
 
     setValue("");
@@ -222,12 +225,12 @@ const ListFriendModel = ({ isOpen, onClose }: ListFriendModalProps) => {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel className="hover:bg-muted cursor-pointer">
+              <AlertDialogCancel className="hover:bg-muted cursor-pointer rounded">
                 Không
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => handleDeleteFriend(id.current)}
-                className="text-white bg-destructive/50 hover:bg-destructive cursor-pointer"
+                className="text-white bg-destructive/50 hover:bg-destructive cursor-pointer rounded"
               >
                 Xóa
               </AlertDialogAction>

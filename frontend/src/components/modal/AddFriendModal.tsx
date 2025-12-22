@@ -28,7 +28,7 @@ interface AddFriendModalProps {
 const AddFriendModal = ({ isOpen, onClose }: AddFriendModalProps) => {
   // chỉ lấy hàm seachUser, tránh render lại khi store thay đổi dữ liệu khác
   const seachUser = useAuthStore((state) => state.seachUser);
-  const { sendFriend, getFriendRequests } = useFriendStore();
+
   const currentUser = useAuthStore((state) => state.user); //user hiện tại
   const {
     requestFrom,
@@ -37,6 +37,8 @@ const AddFriendModal = ({ isOpen, onClose }: AddFriendModalProps) => {
     declineFriend,
     setRequest,
     cancelFriend,
+    sendFriend,
+    getFriendRequests,
   } = useFriendStore();
   const [tab, setTab] = useState("search");
   const [keyword, setKeyword] = useState("");
@@ -103,7 +105,7 @@ const AddFriendModal = ({ isOpen, onClose }: AddFriendModalProps) => {
   const handleAcceptFriend = async (id: string) => {
     try {
       await acceptFriend(id);
-      setRequest(id);
+
       onClose();
     } catch (error) {
       console.error(error);
@@ -112,7 +114,6 @@ const AddFriendModal = ({ isOpen, onClose }: AddFriendModalProps) => {
   const handleDeclineFriend = async (id: string) => {
     try {
       await declineFriend(id);
-      setRequest(id);
     } catch (error) {
       console.error(error);
     }

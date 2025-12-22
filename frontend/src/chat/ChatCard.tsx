@@ -55,9 +55,11 @@ const ChatCard = ({
             </span>
           </div>
           <div className="flex gap-2 ">
-            {sender && <div className="">{`${sender}`}</div>}
+            {sender && (
+              <div className="text-muted-foreground">{`${sender}`}</div>
+            )}
 
-            <div className="truncate flex gap-1 items-center ">
+            <div className="truncate flex gap-1 items-center text-muted-foreground ">
               {subtitle === "Hình ảnh" && (
                 <Image className="size-4 flex text-muted-foreground" />
               )}

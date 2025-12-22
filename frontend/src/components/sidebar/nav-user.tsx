@@ -80,19 +80,19 @@ export function NavUser({ user }: { user: typeUser }) {
             <DropdownMenuSeparator />
             <div className="flex flex-col gap-1 p-1">
               <DropdownMenuItem
-                className="gap-2 cursor-pointer text-muted-foreground hover:bg-muted"
+                className="gap-2 cursor-pointer text-muted-foreground hover:bg-muted hover:bg-muted dark:hover:text-white"
                 onClick={handleIsOpen} // Mở Modal khi click
               >
                 <User size={15} className="text-muted-foreground" />
                 Tài Khoản
               </DropdownMenuItem>
 
-              <DropdownMenuItem className="gap-2 cursor-pointer text-muted-foreground hover:bg-muted">
+              <DropdownMenuItem className="gap-2 cursor-pointer text-muted-foreground hover:bg-muted dark:hover:text-white">
                 <Bell size={15} className="text-muted-foreground" />
                 Thông báo
               </DropdownMenuItem>
 
-              <DropdownMenuItem className="gap-2 cursor-pointer text-muted-foreground hover:bg-muted">
+              <DropdownMenuItem className="gap-2 cursor-pointer text-muted-foreground hover:bg-muted dark:hover:text-white">
                 <Settings size={15} className="text-muted-foreground" />
                 Cài đặt
               </DropdownMenuItem>

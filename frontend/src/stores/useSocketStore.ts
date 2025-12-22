@@ -3,6 +3,7 @@ import { io, type Socket } from "socket.io-client";
 import { useAuthStore } from "./useAuthStore";
 import { useChatStore } from "./useChatStore";
 import type { SocketState } from "@/types/typeStore";
+import { useFriendStore } from "./useFriendStore";
 
 const baseURL = import.meta.env.VITE_SOCKET_URL;
 
@@ -30,7 +31,11 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     socket.on("user-online", (userId) => {
       set({ userOnline: userId });
     });
-
+    // lắng nghe sự kiện gửi đồng ý kết bạn
+    socket.on("new-group", ({ conversation }) => {
+      // thêm conversation
+      useChatStore.getState().updateConversation(conversation);
+    });
     // new message
     socket.on("new-message", ({ message, conversation, unreadCounts }) => {
       const { activeConversationId, addMessage, updateConversation } =
@@ -74,16 +79,17 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       updateConversation(updateConvo);
     });
 
-    // Sự kiện này server bắn về để update cái chữ "Đã xem" nhỏ nhỏ
+    // lằng nghe sự kiện đã xem
     socket.on(
       "conversation-seen",
       ({ conversationId, seenBy, unreadCounts }) => {
-        const { conversations, updateConversation } = useChatStore.getState();
+        const { conversations, updateSeenConversation } =
+          useChatStore.getState();
 
         // Tìm cuộc hội thoại cần update
         const convo = conversations.find((c) => c._id === conversationId);
         if (convo) {
-          updateConversation({
+          updateSeenConversation({
             ...convo,
             seenBy: seenBy, // Cập nhật danh sách người đã xem mới
             unreadCounts: unreadCounts, // Cập nhật lại số tin chưa đọc
@@ -91,6 +97,33 @@ export const useSocketStore = create<SocketState>((set, get) => ({
         }
       }
     );
+
+    // lắng nghe sự kiện gửi request kết bạn
+    socket.on("friend:new-request", (data) => {
+      // add lời mời vào store
+      useFriendStore.getState().addRequest(data);
+    });
+    // lắng nghe sự kiện gửi đồng ý kết bạn
+    socket.on("new-friend", ({ friend, requestId, conversation }) => {
+      // add bạn bè vào store
+
+      useFriendStore.getState().addFriend(friend);
+      // xóa lời mời
+      useFriendStore.getState().setRequest(requestId);
+      // thêm conversation
+      useChatStore.getState().updateConversation(conversation);
+    });
+    // lắng nghe sự kiện gửi từ chối kết bạn
+    socket.on("decline-friend", ({ requestId }) => {
+      // xóa lời mời
+      useFriendStore.getState().setRequest(requestId);
+    });
+    // lắng nghe sự kiện xóa kết bạn
+    socket.on("delete-friend", ({ user, conversation }) => {
+      // xóa lời mời
+      useFriendStore.getState().removeFriend(user._id.toString());
+      useChatStore.getState().removeConversation(conversation);
+    });
   },
 
   disconnectSocket: () => {
@@ -103,7 +136,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
   messagesAsSeen: (conversationId: string) => {
     const socket = get().socket;
     const { user } = useAuthStore.getState();
-    const { conversations, updateConversation } = useChatStore.getState();
+    const { conversations, updateSeenConversation } = useChatStore.getState();
 
     // Gửi sự kiện lên server
     if (socket) {
@@ -114,7 +147,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     const convo = conversations.find((c) => c._id === conversationId);
     // console.log(convo);
     if (convo) {
-      updateConversation({
+      updateSeenConversation({
         ...convo,
         unreadCounts: {
           ...convo.unreadCounts,

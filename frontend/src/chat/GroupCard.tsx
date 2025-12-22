@@ -38,11 +38,14 @@ const GroupCard = ({ convo }: { convo: Conversation }) => {
     }
   };
 
-  const senderId = convo.lastMessage?.senderId._id;
-  const sender =
-    senderId?.toString() === user?._id?.toString()
-      ? "Bạn"
-      : convo.lastMessage?.senderId.displayName;
+  const userSend = "Hãy bắt đầu trò chuyện!";
+  const isMe =
+    convo.lastMessage?.senderId._id.toString() === user._id.toString();
+  const sender = !convo.lastMessage
+    ? userSend
+    : isMe
+    ? "Bạn:"
+    : `${convo.lastMessage?.senderId.displayName}:`;
 
   return (
     <ChatCard
@@ -59,7 +62,7 @@ const GroupCard = ({ convo }: { convo: Conversation }) => {
           <UnReadCountBadge unreadCount={unreadCount} />
         </>
       }
-      sender={`${sender}:`}
+      sender={sender}
     />
   );
 };

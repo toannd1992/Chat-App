@@ -3,6 +3,7 @@ import FriendModel from "../models/FriendModel.js";
 import User from "../models/UserModel.js";
 import FriendRequestModel from "../models/FriendRequestModel.js";
 import ConversationModel from "../models/ConversationModel.js";
+import MessageModel from "../models/MessageModel.js";
 
 export const sendFriend = async (req, res) => {
   try {
@@ -67,6 +68,7 @@ export const sendFriend = async (req, res) => {
 export const acceptFriendRequest = async (req, res) => {
   try {
     const { requestId } = req.params;
+
     const userId = req.user._id;
     //check id lời mời có đúng mẫu với mongoose không?
 
@@ -96,7 +98,10 @@ export const acceptFriendRequest = async (req, res) => {
       userB: request.to,
     });
     // xóa lời mời kết bạn trong db
-    await FriendRequestModel.findByIdAndDelete(requestId);
+    if (friend) {
+      await FriendRequestModel.findByIdAndDelete(requestId);
+    }
+
     // lấy thông tin của người gửi
 
     const from = await User.findById(request.from)
@@ -115,7 +120,18 @@ export const acceptFriendRequest = async (req, res) => {
       },
     });
 
-    if (existed) return existed;
+    if (existed) {
+      return res.status(200).json({
+        conversation: existed,
+        from,
+        friend: {
+          _id: userId,
+          displayName: req.user.displayName,
+          avatarUrl: req.user.avatarUrl,
+        },
+        requestId, // id lời mời
+      });
+    }
 
     // tạo conversation khi đã là bạn bè
     const conversation = await ConversationModel.create({
@@ -138,7 +154,16 @@ export const acceptFriendRequest = async (req, res) => {
       },
     ]);
 
-    res.status(200).json({ conversation, from });
+    res.status(200).json({
+      conversation,
+      from,
+      friend: {
+        _id: userId,
+        displayName: req.user.displayName,
+        avatarUrl: req.user.avatarUrl,
+      },
+      requestId,
+    });
   } catch (error) {
     console.error("lỗi khi đồng ý kết bạn", error);
     return res.status(500).json({ message: "lỗi hệ thống" });
@@ -174,7 +199,7 @@ export const declineFriendRequest = async (req, res) => {
     // delete lời mời
 
     await FriendRequestModel.findByIdAndDelete(requestId);
-    return res.status(200).json({ message: "Từ chối kết bạn thành công" });
+    return res.status(200).json({ userId, requestId });
   } catch (error) {
     console.error("lỗi khi từ chối kết bạn", error);
     return res.status(500).json({ message: "lỗi hệ thống" });
@@ -195,6 +220,7 @@ export const cancelFriendRequest = async (req, res) => {
 
     //check đúng người gửi lời mời kết bạn
     const request = await FriendRequestModel.findById(requestId);
+    console.log(request);
 
     if (!request) {
       res.status(404).json({ message: "không tìm thấy lời mời kết bạn" });
@@ -209,7 +235,7 @@ export const cancelFriendRequest = async (req, res) => {
     // delete lời mời
 
     await FriendRequestModel.findByIdAndDelete(requestId);
-    return res.status(200).json({ message: "Hủy lời mời kết bạn thành công" });
+    return res.status(200).json({ userId: request.to, requestId });
   } catch (error) {
     console.error("lỗi khi Hủy lời mời kết", error);
     return res.status(500).json({ message: "lỗi hệ thống" });
@@ -291,13 +317,17 @@ export const deleteFriend = async (req, res) => {
   try {
     const userA = req.user._id.toString();
     const { id } = req.params;
-    console.log(userA);
-    console.log(id);
+
     const PairHelper = (a, b) => {
       return a < b ? { userA: a, userB: b } : { userA: b, userB: a };
     };
     const pair = PairHelper(userA, id);
-    // xóa trong db
+    // tìm otherUser để trả về cho frontend để úpdate store
+    const otherUser = await User.findById(id).select(
+      "_id displayName avatarUrl"
+    );
+
+    // xóa bạn bè trong db
     const friend = await FriendModel.findOneAndDelete(pair);
     if (!friend) {
       return res.status(404).json({ message: "Không phải là bạn bè" });
@@ -307,8 +337,21 @@ export const deleteFriend = async (req, res) => {
       type: "direct",
       "participants.userId": { $all: [userA, id] },
     });
-
-    return res.status(200).json({ id, conversation });
+    if (conversation) {
+      // xóa tất cả tin nhắn liên quan đến cuộc hội thoại
+      await MessageModel.deleteMany({ conversationId: conversation._id });
+      // xóa luôn cuộc hội thoại
+      await ConversationModel.findByIdAndDelete(conversation._id);
+    }
+    return res.status(200).json({
+      user: {
+        _id: req.user._id,
+        displayName: req.user.displayName,
+        avatarUrl: req.user.avatarUrl,
+      },
+      otherUser,
+      conversation,
+    });
   } catch (error) {
     console.error("lỗi khi hủy kết bạn", error);
     return res.status(500).json({ message: "lỗi hệ thống" });

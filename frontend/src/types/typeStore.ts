@@ -44,6 +44,9 @@ export interface FriendState {
   setRequest: (id: string) => void;
   cancelFriend: (id: string) => Promise<void>;
   getAllFriend: () => Promise<void>;
+  addRequest: (request: FriendRequest) => void;
+  addFriend: (friend: typeUser) => void;
+  removeFriend: (id: string) => void;
 }
 
 export interface ThemeState {
@@ -93,6 +96,7 @@ export interface ChatState {
   addMessage: (message: Message) => Promise<void>;
   // update conversation
   updateConversation: (conversation: Conversation) => void;
+  updateSeenConversation: (conversation: Conversation) => void;
   createGroup: (
     type: string,
     memberIds: string[],

@@ -1,11 +1,30 @@
+import Welcome from "@/chat/Welcome";
 import BodyMessage from "@/components/MessageChat/BodyMessage";
 import HeaderMessage from "@/components/MessageChat/HeaderMessage";
 import AddFriendModal from "@/components/modal/AddFriendModal";
 import CreateGroupModal from "@/components/modal/CreateGroupModal";
 import ListFriendModel from "@/components/modal/ListFriendModel";
 import UserProfileModal from "@/components/modal/UserProfileModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import { Button } from "@/components/ui/button";
 
 import { Separator } from "@/components/ui/separator";
 import {
@@ -13,7 +32,10 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { useChatStore } from "@/stores/useChatStore";
 import { useThemeStore } from "@/stores/useThemeStore";
+import { Ellipsis } from "lucide-react";
+import { useState } from "react";
 
 const ChatApp = () => {
   const {
@@ -26,12 +48,22 @@ const ChatApp = () => {
     setListFriend,
     isOpenListFriend,
   } = useThemeStore();
+  const { activeConversationId } = useChatStore();
+  const [alert, setAlert] = useState(false);
+
+  const onCloseAlert = () => {
+    setAlert(false);
+  };
+
+  const handleDeleteConvo = () => {
+    //
+  };
   return (
     <SidebarProvider className="w-full h-screen overflow-hidden  pb-2 relative">
       <AppSidebar />
       <SidebarInset className="flex flex-col h-full overflow-hidden">
         {/* header */}
-        <header className="flex h-18 shrink-0 items-center gap-2">
+        <header className="flex h-18 shrink-0 items-center gap-2 justify-between">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1 cursor-pointer" />
             <Separator
@@ -40,10 +72,65 @@ const ChatApp = () => {
             />
             <HeaderMessage />
           </div>
+          <div className="mr-5">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="completedGhost"
+                  size="icon-sm"
+                  className="cursor-pointer rounded hover:bg-muted-foreground/10 p-1"
+                >
+                  <Ellipsis className=" p-1 size-6 text-muted-foreground rounded cursor-pointer hover:bg-muted-foreground/30" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-35" align="start">
+                <DropdownMenuGroup>
+                  <DropdownMenuItem className="cursor-pointer">
+                    Ghim hội thoại
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer">
+                    Ẩn trò chuyện
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      // id.current = user._id;
+                      setAlert(true);
+                      // setName(user.displayName);
+                    }}
+                    className="cursor-pointer text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
+                  >
+                    Xóa hội thoại
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <AlertDialog open={alert} onOpenChange={onCloseAlert}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Xác nhận</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Toàn bộ nội dung cuộc trò chuyện sẽ bị xóa vĩnh viễn. Bạn có
+                    chắc chắn muốn xóa?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="hover:bg-muted cursor-pointer rounded">
+                    Không
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleDeleteConvo(activeConversationId)}
+                    className="text-white bg-destructive/50 hover:bg-destructive cursor-pointer rounded"
+                  >
+                    Xóa
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </header>
         {/* body chat */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <BodyMessage />
+          {activeConversationId ? <BodyMessage /> : <Welcome />}
         </div>
       </SidebarInset>
       <UserProfileModal

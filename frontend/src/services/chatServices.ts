@@ -68,6 +68,6 @@ export const chatServices = {
       { type, memberIds, name },
       { withCredentials: true }
     );
-    return res.data.conversation;
+    return res.data;
   },
 };

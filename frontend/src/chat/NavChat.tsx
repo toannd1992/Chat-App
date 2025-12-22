@@ -8,7 +8,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useThemeStore } from "@/stores/useThemeStore";
 
-import { Search, UserPlus2, Users2, X } from "lucide-react";
+import { Contact, Search, UserPlus2, Users2, X } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useChatStore } from "@/stores/useChatStore";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -18,7 +18,7 @@ import UserAvatar from "./UserAvatar";
 import GroupAvatar from "./GroupAvatar";
 
 const NavChat = () => {
-  const { setAddFriend, setCreateGroup } = useThemeStore();
+  const { setAddFriend, setCreateGroup, setListFriend } = useThemeStore();
   const {
     conversations,
     setActiveConversation,
@@ -73,7 +73,9 @@ const NavChat = () => {
       await fetchMessages(id); // lay tin nham khi lick vao hoi thoai
     }
   };
-
+  const handleIsOpenListFriend = () => {
+    setListFriend(true);
+  };
   //  lấy thông tin hiển thị
   const getInfo = (convo: Conversation) => {
     if (convo.type === "group") {
@@ -111,7 +113,7 @@ const NavChat = () => {
                 if (!open) setOpen(true); //  mở popover khi gõ
               }}
               onClick={() => setOpen(true)}
-              placeholder="Tìm kiếm nhóm, bạn bè..."
+              placeholder="Tìm kiếm . . ."
               className="pl-8 rounded"
             />
             {value && (
@@ -185,6 +187,14 @@ const NavChat = () => {
           title="Tạo nhóm"
         >
           <Users2 className="size-4" />
+        </Button>
+        <Button
+          onClick={handleIsOpenListFriend}
+          variant="ghost"
+          className="rounded cursor-pointer"
+          title="Danh bạ"
+        >
+          <Contact className="size-4" />
         </Button>
       </div>
     </div>

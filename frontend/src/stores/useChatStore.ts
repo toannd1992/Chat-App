@@ -3,6 +3,7 @@ import type { ChatState } from "@/types/typeStore";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useAuthStore } from "./useAuthStore";
+import { useSocketStore } from "./useSocketStore";
 
 export const useChatStore = create<ChatState>()(
   persist(
@@ -157,22 +158,34 @@ export const useChatStore = create<ChatState>()(
       },
       updateConversation: async (conversation) => {
         set((state) => {
-          //kiểm tra đã có cuộc hội thoại chưa
-          const isExist = state.conversations.some(
+          //tìm cuộc hội thoại cũ xem có không
+          const isExist = state.conversations.find(
             (c) => c._id === conversation._id
           );
-          if (isExist) {
-            // nếu có thì mới update
-            return {
-              conversations: state.conversations.map((c) =>
-                c._id === conversation._id ? { ...c, ...conversation } : c
-              ),
-            };
-          } else {
-            // nếu chưa có thì thêm mới khi chấp nhận kết bạn
-            return { conversations: [...state.conversations, conversation] };
-          }
+
+          // nếu có thì update còn chưa có thì lấy cuộc hội thoại mới
+
+          const newConvo = isExist
+            ? { ...isExist, ...conversation }
+            : conversation;
+
+          // lọc để xóa bỏ cuộc hội thoại cũ
+          const otherConvo = state.conversations.filter(
+            (c) => c._id !== conversation._id
+          );
+
+          // nếu có thì mới update
+          return {
+            conversations: [newConvo, ...otherConvo],
+          };
         });
+      },
+      updateSeenConversation: async (conversation) => {
+        set((state) => ({
+          conversations: state.conversations.map((c) =>
+            c._id === conversation._id ? { ...c, ...conversation } : c
+          ),
+        }));
       },
       removeConversation: (conversation) => {
         set((state) => ({
@@ -184,16 +197,25 @@ export const useChatStore = create<ChatState>()(
 
       createGroup: async (type, memberIds, name) => {
         try {
-          const convsersation = await chatServices.createGroup({
+          const { conversation } = await chatServices.createGroup({
             type,
             memberIds,
             name,
           });
+          if (conversation) {
+            const { updateConversation, setActiveConversation } = get();
+            const socket = useSocketStore.getState().socket;
+            updateConversation(conversation);
+            setActiveConversation(conversation._id);
 
-          set((state) => ({
-            conversations: [...state.conversations, convsersation],
-            activeConversationId: convsersation._id,
-          }));
+            // set((state) => ({
+            //   conversations: [conversation, ...state.conversations],
+            //   activeConversationId: conversation._id,
+            // }));
+
+            // bắn socket
+            socket?.emit("create-group", { conversation });
+          }
         } catch (error) {
           console.error("Lỗi khi tạo nhóm chat", error);
         }

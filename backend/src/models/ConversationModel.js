@@ -71,12 +71,13 @@ const conversationSchema = new mongoose.Schema(
 
     lastMessageAt: {
       type: Date,
+      default: Date.now,
     },
 
     seenBy: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        red: "User",
+        ref: "User",
       },
     ],
     lastMessage: {
@@ -95,7 +96,7 @@ const conversationSchema = new mongoose.Schema(
 );
 
 conversationSchema.index({
-  "participant.userId": 1,
+  "participants.userId": 1,
   lastMessageAt: -1,
 });
 

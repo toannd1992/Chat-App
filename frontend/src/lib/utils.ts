@@ -1,9 +1,58 @@
+import type { Conversation, Participant } from "@/types/typeChat";
+import type { typeUser } from "@/types/typeUser";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+export const nameProject = "Chat App";
+
+export const getInfo = (
+  convo: Conversation,
+  user: typeUser,
+  activeConversationId: string | null
+) => {
+  const userSend = "Hãy bắt đầu trò chuyện!";
+  const isMe =
+    convo.lastMessage?.senderId._id.toString() === user._id.toString();
+  if (convo.type === "group") {
+    return {
+      name: convo.group?.name ?? "",
+      subtitle: convo.lastMessage?.content,
+      timestamp: convo.lastMessage?.createdAt
+        ? new Date(convo.lastMessage.createdAt)
+        : undefined,
+      unreadCount:
+        convo._id.toString() === activeConversationId
+          ? 0
+          : convo.unreadCounts[user._id],
+      sender: !convo.lastMessage
+        ? userSend
+        : isMe
+        ? "Bạn:"
+        : `${convo.lastMessage?.senderId.displayName}:`,
+    };
+  }
+  const otherUser = convo.participants.find(
+    (p: Participant) => p.userId?._id !== user?._id
+  );
+
+  return {
+    name: otherUser?.userId?.displayName ?? "",
+    subtitle: convo.lastMessage?.content ?? "",
+    timestamp: convo.lastMessage?.createdAt
+      ? new Date(convo.lastMessage.createdAt)
+      : undefined,
+    avatarUrl: otherUser?.userId?.avatarUrl ?? undefined,
+    unreadCount:
+      convo._id.toString() === activeConversationId
+        ? 0
+        : convo.unreadCounts[user._id],
+    sender: !convo.lastMessage ? userSend : isMe ? "Bạn:" : "",
+    otherUser,
+  };
+};
 
 export const formatOnlineTime = (date: Date) => {
   const now = new Date();

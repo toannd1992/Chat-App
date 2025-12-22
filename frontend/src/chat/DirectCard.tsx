@@ -43,8 +43,10 @@ const DirectCard = ({ convo }: { convo: Conversation }) => {
       await fetchMessages(id); // lay tin nham khi lick vao hoi thoai
     }
   };
-  const senderId = convo.lastMessage?.senderId._id;
-  const sender = senderId?.toString() === user?._id?.toString() ? "Bạn:" : "";
+  const userSend = "Hãy bắt đầu trò chuyện!";
+  const isMe =
+    convo.lastMessage?.senderId._id.toString() === user._id.toString();
+  const sender = !convo.lastMessage ? userSend : isMe ? "Bạn:" : "";
 
   return (
     <ChatCard
