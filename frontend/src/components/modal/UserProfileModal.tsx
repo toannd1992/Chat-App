@@ -1,6 +1,6 @@
 import UserAvatar from "@/chat/UserAvatar";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { Camera, Pencil, RotateCcw, Save, X } from "lucide-react";
+import { Camera, Pencil, RotateCcw, Save } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import imageCompression from "browser-image-compression";
 import { Spinner } from "../ui/spinner";
