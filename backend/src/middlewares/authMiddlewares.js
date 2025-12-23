@@ -9,7 +9,7 @@ export const protectedRouter = (req, res, next) => {
     const token = header && header.split(" ")[1];
 
     if (!token) {
-      res.status(401).json({
+      return res.status(401).json({
         message: " Không tìm thấy accessToken",
       });
     }
@@ -37,6 +37,6 @@ export const protectedRouter = (req, res, next) => {
     });
   } catch (error) {
     console.error("lỗi khi xác thực Middlewares", error);
-    res.status(500).json({ message: " lỗi hệ thống" });
+    return res.status(500).json({ message: " lỗi hệ thống" });
   }
 };

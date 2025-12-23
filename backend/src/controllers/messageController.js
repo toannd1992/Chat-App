@@ -59,7 +59,7 @@ export const sendDirectMess = async (req, res) => {
     return res.status(200).json({ message });
   } catch (error) {
     console.error("lỗi khi gửi tin nhắn riêng", error);
-    res.status(500).json({ message: "lỗi hệ thống" });
+    return res.status(500).json({ message: "lỗi hệ thống" });
   }
 };
 
@@ -102,6 +102,6 @@ export const sendGroupMess = async (req, res) => {
     return res.status(200).json({ message });
   } catch (error) {
     console.error("lỗi khi gửi tin nhắn chung", error);
-    res.status(500).json({ message: "lỗi hệ thống" });
+    return res.status(500).json({ message: "lỗi hệ thống" });
   }
 };

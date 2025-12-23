@@ -6,10 +6,10 @@ import validator from "validator";
 
 export const authMeController = async (req, res) => {
   try {
-    res.status(200).json(req.user);
+    return res.status(200).json(req.user);
   } catch (error) {
     console.error("Lỗi khi gọi authMe", error);
-    res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 };
 
@@ -39,7 +39,7 @@ export const updateAvatarController = async (req, res) => {
     return res.status(200).json({ user });
   } catch (error) {
     console.error("Lỗi khi update avatar", error);
-    res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 };
 

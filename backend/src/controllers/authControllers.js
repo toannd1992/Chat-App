@@ -39,7 +39,7 @@ export const signupController = async (req, res) => {
     return res.status(201).json({ message: "Tạo tài khoản thành công" });
   } catch (error) {
     console.error("Lỗi khi tạo tài khoản", error);
-    res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 };
 
@@ -95,7 +95,7 @@ export const signinController = async (req, res) => {
     maxAge: REFRESH_TOKEN_TTL,
   });
   //  trả accessToken về res
-  res.status(200).json({
+  return res.status(200).json({
     accessToken: accessToken,
     message: "Đăng nhập thành công",
   });
@@ -112,10 +112,14 @@ export const signoutController = async (req, res) => {
       await Sesstion.deleteOne({ refreshToken: token });
       // xóa cookie
 
-      res.clearCookie("refreshToken");
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+      });
     }
 
-    res.sendStatus(204);
+    return res.sendStatus(204);
   } catch (error) {
     console.error("Lỗi khi đăng xuất tài khoản", error);
     res.status(500).json({ message: "Lỗi hệ thống" });
@@ -152,6 +156,6 @@ export const refreshController = async (req, res) => {
     return res.status(200).json({ accessToken });
   } catch (error) {
     console.error("Lỗi khi gọi refresh", error);
-    res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 };

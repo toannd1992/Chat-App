@@ -30,6 +30,6 @@ export const friendMiddleware = async (req, res, next) => {
     }
   } catch (error) {
     console.error("Lỗi qua friendMiddleware", error);
-    res.status(500).json({ message: "lỗi hệ thống" });
+    return res.status(500).json({ message: "lỗi hệ thống" });
   }
 };
