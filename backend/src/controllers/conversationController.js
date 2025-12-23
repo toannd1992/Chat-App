@@ -94,14 +94,6 @@ export const getAllConversation = async (req, res) => {
         select: "displayName avatarUrl",
       })
       .populate({ path: "seenBy", select: "displayName avatarUrl" });
-    // const newConversation = conversations.map((item) => item.participants);
-    // const format1 = newConversation.map((item) => item);
-    // const format = newConversation.map((item) => ({
-    //   id: item.userId?._id,
-    //   displayName: item.userId?.displayName,
-    //   avatarUrl: item.userId?.avatarUrl ?? null,
-    //   joineAt: item.joineAt,
-    // }));
 
     const newConversation = conversations.map((item) => {
       const parcitipant = (item.participants || []).map((p) => ({
@@ -168,5 +160,114 @@ export const getConversationSocket = async (userId) => {
   } catch (error) {
     console.error("lỗi khi getConversationSocket", error);
     return [];
+  }
+};
+
+export const deleteConversation = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { type } = req.body;
+    const userId = req.user._id;
+    // tìm cuộc hội thoại
+    const conversation = await ConversationModel.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ message: "Không tìm thấy cuộc hội thoại" });
+    }
+    switch (type) {
+      case "delete_convo":
+        if (conversation.type !== "direct") {
+          return res.status(400).json({
+            message: "Chỉ được xóa hội thoại",
+          });
+        }
+
+        const isMe = conversation.participants.some(
+          (p) => p.userId.toString() === userId.toString()
+        );
+        if (!isMe) {
+          return res.status(403).json({
+            message: "Bạn không có quyền xóa hội thoại này",
+          });
+        }
+        // xóa tin nhắn và cuộc hội thoại
+        await Promise.all([
+          ConversationModel.findByIdAndDelete(conversationId),
+          MessageModel.deleteMany({ conversationId: conversationId }),
+        ]);
+        return res.status(200).json({
+          message: "xóa hội thoại thành công",
+          conversation,
+          type,
+        });
+      case "delete_group":
+        if (conversation.type !== "group") {
+          return res.status(400).json({
+            message: "Không phải hội thoại nhóm",
+          });
+        }
+        if (conversation.group.createdBy.toString() !== userId.toString()) {
+          return res
+            .status(400)
+            .json({ message: "Chủ phòng mới có thể xóa phòng" });
+        }
+        // xóa tin nhắn và cuộc hội thoại
+        await Promise.all([
+          ConversationModel.findByIdAndDelete(conversationId),
+          MessageModel.deleteMany({ conversationId: conversationId }),
+        ]);
+        return res.status(200).json({
+          message: "Giải tán nhóm thành công",
+          conversation,
+          type,
+        });
+      case "leave_group":
+        if (conversation.type !== "group") {
+          return res.status(400).json({
+            message: "Chỉ áp dụng cho nhóm",
+          });
+        }
+        const isUser = conversation.participants.some(
+          (p) => p.userId.toString() === userId.toString()
+        );
+
+        if (!isUser) {
+          return res
+            .status(404)
+            .json({ message: "Chỉ thành viên trong nhóm mới được rời nhóm" });
+        }
+
+        if (conversation.group.createdBy.toString() === userId.toString()) {
+          return res.status(400).json({
+            message: "Chủ nhóm không thể rời nhóm",
+          });
+        }
+        const updatedConversation = await ConversationModel.findByIdAndUpdate(
+          conversation._id,
+          { $pull: { participants: { userId } } },
+          { new: true } // trả document khi update
+        )
+          .populate({
+            path: "participants.userId",
+            select: "displayName avatarUrl",
+          })
+          .populate({
+            path: "lastMessage.senderId",
+            select: "displayName avatarUrl",
+          })
+          .populate({ path: "seenBy", select: "displayName avatarUrl" });
+
+        return res.status(200).json({
+          message: "Rời nhóm thành công",
+          conversation: updatedConversation,
+          type,
+        });
+      default:
+        return res.status(400).json({
+          message: "Type không hợp lệ",
+        });
+    }
+  } catch (error) {
+    console.error("Lỗi khi xóa group", error);
+    return res.status(500).json({ message: "lỗi hệ thống" });
   }
 };

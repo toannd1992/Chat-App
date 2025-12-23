@@ -18,7 +18,13 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
   const inputMessage = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    inputMessage.current?.focus();
+    const timer = setTimeout(() => {
+      if (inputMessage.current) {
+        inputMessage.current?.focus({ preventScroll: true });
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [activeConversationId]);
 
   if (!user) return;

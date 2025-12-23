@@ -49,8 +49,12 @@ const ListFriendModel = ({ isOpen, onClose }: ListFriendModalProps) => {
   const id = useRef<string | null>(null);
 
   const { friends, getAllFriend, deleteFriend } = useFriendStore();
-  const { setActiveConversation, conversations, fetchMessages } =
-    useChatStore.getState();
+  const {
+    setActiveConversation,
+    conversations,
+    fetchMessages,
+    createConversation,
+  } = useChatStore.getState();
   useEffect(() => {
     getAllFriend();
   }, []);
@@ -67,6 +71,11 @@ const ListFriendModel = ({ isOpen, onClose }: ListFriendModalProps) => {
       setActiveConversation(conversation._id);
 
       await fetchMessages(conversation._id); // lay tin nham khi lick vao hoi thoai
+    } else {
+      // nếu chưa có thị tạo mới
+      const type = "direct";
+      const memberIds = [id];
+      createConversation(type, memberIds);
     }
 
     setValue("");
@@ -162,7 +171,7 @@ const ListFriendModel = ({ isOpen, onClose }: ListFriendModalProps) => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="w-35" align="start">
                         <DropdownMenuGroup>
-                          <DropdownMenuItem className="cursor-pointer">
+                          <DropdownMenuItem className="cursor-pointer dark:hover:text-white/50">
                             Xem thông tin
                           </DropdownMenuItem>
                         </DropdownMenuGroup>

@@ -27,6 +27,7 @@ import { useChatStore } from "@/stores/useChatStore";
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import ChatList from "@/chat/ChatList";
+import { nameProject } from "../../lib/utils.ts";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [tab, setTab] = useState("all");
@@ -48,7 +49,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <a href="#">
                 <div className="flex w-full items-center px-2 justify-between">
-                  <h1 className="text-xl font-bold text-white">Chat App</h1>
+                  <h1 className="text-2xl font-bold text-white">
+                    {nameProject}
+                  </h1>
                   <div className="flex items-center gap-2">
                     <Sun className="size-4 text-white/80" />
                     <Switch

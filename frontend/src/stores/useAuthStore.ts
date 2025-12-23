@@ -5,6 +5,7 @@ import { authServices } from "@/services/authServices";
 import { persist } from "zustand/middleware";
 import { useChatStore } from "./useChatStore";
 import { useFriendStore } from "./useFriendStore";
+import { useThemeStore } from "./useThemeStore";
 
 export const useAuthStore = create<typeStore>()(
   persist(
@@ -46,6 +47,7 @@ export const useAuthStore = create<typeStore>()(
           localStorage.clear(); // xóa localStorage khi đăng nhập
           useChatStore.getState().reset(); //reset chatStore
           useFriendStore.getState().reset();
+          useThemeStore.getState().clearState();
 
           const { accessToken, message } = await authServices.signIn(
             email,
@@ -55,6 +57,7 @@ export const useAuthStore = create<typeStore>()(
           set({ accessToken: accessToken });
           await get().fetchMeStore();
           useChatStore.getState().fetchConversations(); // lấy thông tin conversation
+          useFriendStore.getState().getFriendRequests();
 
           toast.success(message);
           return message;

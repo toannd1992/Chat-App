@@ -199,7 +199,7 @@ export const declineFriendRequest = async (req, res) => {
     // delete lời mời
 
     await FriendRequestModel.findByIdAndDelete(requestId);
-    return res.status(200).json({ userId, requestId });
+    return res.status(200).json({ userId: request.from, requestId });
   } catch (error) {
     console.error("lỗi khi từ chối kết bạn", error);
     return res.status(500).json({ message: "lỗi hệ thống" });
@@ -220,7 +220,6 @@ export const cancelFriendRequest = async (req, res) => {
 
     //check đúng người gửi lời mời kết bạn
     const request = await FriendRequestModel.findById(requestId);
-    console.log(request);
 
     if (!request) {
       res.status(404).json({ message: "không tìm thấy lời mời kết bạn" });
@@ -285,24 +284,6 @@ export const getFriendsRequest = async (req, res) => {
         "_id displayName avatarUrl"
       ),
     ]);
-
-    // const requestFriend = await FriendRequestModel.find({
-    //   $or: [{ to: userId }, { from: userId }],
-    // })
-    //   .populate("from", "_id displayName avatarUrl")
-    //   .populate("to", "_id displayName avatarUrl");
-
-    // // return res.status(400).json({ requestFriend });
-    // if (!requestFriend.length) {
-    //   return res.status(400).json({ requestFrom: [], requestTo: [] });
-    // }
-
-    // const requestFrom = requestFriend.map((item) =>
-    //   item.from._id.toString() === userId.toString() ? item.to : item.from
-    // );
-    // const requestTo = requestFriend.map((item) =>
-    //   item.to._id.toString() === userId.toString() ? item.from : ""
-    // );
 
     return res
       .status(200)

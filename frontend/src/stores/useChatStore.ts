@@ -195,9 +195,9 @@ export const useChatStore = create<ChatState>()(
         }));
       },
 
-      createGroup: async (type, memberIds, name) => {
+      createConversation: async (type, memberIds, name) => {
         try {
-          const { conversation } = await chatServices.createGroup({
+          const { conversation } = await chatServices.createConversation({
             type,
             memberIds,
             name,
@@ -208,13 +208,31 @@ export const useChatStore = create<ChatState>()(
             updateConversation(conversation);
             setActiveConversation(conversation._id);
 
-            // set((state) => ({
-            //   conversations: [conversation, ...state.conversations],
-            //   activeConversationId: conversation._id,
-            // }));
-
             // bắn socket
             socket?.emit("create-group", { conversation });
+          }
+        } catch (error) {
+          console.error("Lỗi khi tạo nhóm chat", error);
+        }
+      },
+      deleteConversation: async (conversationId, type) => {
+        try {
+          const { conversation, type: leave } =
+            await chatServices.deleteConversation(conversationId, type);
+
+          if (conversation) {
+            const { removeConversation } = get();
+            const socket = useSocketStore.getState().socket;
+            removeConversation(conversation);
+            set({
+              activeConversationId: null,
+            });
+            // bắn socket
+            if (leave === "leave_group") {
+              socket?.emit("leave-group", { conversation });
+            } else {
+              socket?.emit("delete-conversation", { conversation });
+            }
           }
         } catch (error) {
           console.error("Lỗi khi tạo nhóm chat", error);

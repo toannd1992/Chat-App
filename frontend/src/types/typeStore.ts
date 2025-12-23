@@ -61,6 +61,7 @@ export interface ThemeState {
   setAddFriend: (isOpen: boolean) => void;
   setCreateGroup: (isOpen: boolean) => void;
   setListFriend: (isOpen: boolean) => void;
+  clearState: () => void;
 }
 
 export interface ChatState {
@@ -97,10 +98,14 @@ export interface ChatState {
   // update conversation
   updateConversation: (conversation: Conversation) => void;
   updateSeenConversation: (conversation: Conversation) => void;
-  createGroup: (
+  createConversation: (
     type: string,
     memberIds: string[],
     name?: string
+  ) => Promise<void>;
+  deleteConversation: (
+    conversationId: string,
+    type: "delete_convo" | "delete_group" | "leave_group"
   ) => Promise<void>;
 }
 

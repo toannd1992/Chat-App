@@ -37,6 +37,8 @@ import { useThemeStore } from "@/stores/useThemeStore";
 import { Ellipsis } from "lucide-react";
 import { useState } from "react";
 
+import { useAuthStore } from "@/stores/useAuthStore";
+
 const ChatApp = () => {
   const {
     isOpenProfile,
@@ -48,16 +50,23 @@ const ChatApp = () => {
     setListFriend,
     isOpenListFriend,
   } = useThemeStore();
-  const { activeConversationId } = useChatStore();
-  const [alert, setAlert] = useState(false);
+  const { activeConversationId, conversations, deleteConversation } =
+    useChatStore();
+  const { user } = useAuthStore();
+  const [type, setType] = useState<
+    "delete_convo" | "delete_group" | "leave_group" | null
+  >(null);
 
-  const onCloseAlert = () => {
-    setAlert(false);
+  const convo = conversations.find((c) => c._id === activeConversationId);
+
+  const handleAction = () => {
+    if (type) {
+      deleteConversation(activeConversationId!, type);
+    }
+
+    setType(null);
   };
 
-  const handleDeleteConvo = () => {
-    //
-  };
   return (
     <SidebarProvider className="w-full h-screen overflow-hidden  pb-2 relative">
       <AppSidebar />
@@ -73,55 +82,79 @@ const ChatApp = () => {
             <HeaderMessage />
           </div>
           <div className="mr-5">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="completedGhost"
-                  size="icon-sm"
-                  className="cursor-pointer rounded hover:bg-muted-foreground/10 p-1"
-                >
-                  <Ellipsis className=" p-1 size-6 text-muted-foreground rounded cursor-pointer hover:bg-muted-foreground/30" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-35" align="start">
-                <DropdownMenuGroup>
-                  <DropdownMenuItem className="cursor-pointer">
-                    Ghim hội thoại
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer">
-                    Ẩn trò chuyện
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      // id.current = user._id;
-                      setAlert(true);
-                      // setName(user.displayName);
-                    }}
-                    className="cursor-pointer text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
+            {convo && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="completedGhost"
+                    size="icon-sm"
+                    className="cursor-pointer rounded hover:bg-muted-foreground/10 p-1"
                   >
-                    Xóa hội thoại
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <AlertDialog open={alert} onOpenChange={onCloseAlert}>
+                    <Ellipsis className=" p-1 size-6 text-muted-foreground rounded cursor-pointer hover:bg-muted-foreground/30" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-35" align="start">
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem className="cursor-pointer">
+                      Ghim hội thoại
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
+                      Ẩn trò chuyện
+                    </DropdownMenuItem>
+                    {/* xóa hội thoại */}
+                    {convo.type === "direct" ? (
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setType("delete_convo");
+                        }}
+                        className="cursor-pointer text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
+                      >
+                        Xóa hội thoại
+                      </DropdownMenuItem>
+                    ) : convo.group?.createdBy === user?._id ? (
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setType("delete_group");
+                        }}
+                        className="cursor-pointer text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
+                      >
+                        Xóa nhóm
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setType("leave_group");
+                        }}
+                        className="cursor-pointer text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
+                      >
+                        Rời nhóm
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            <AlertDialog open={!!type} onOpenChange={() => setType(null)}>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Xác nhận</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    {type === "leave_group" ? "Rời nhóm" : "Xác nhận xóa"}
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Toàn bộ nội dung cuộc trò chuyện sẽ bị xóa vĩnh viễn. Bạn có
-                    chắc chắn muốn xóa?
+                    {type === "leave_group"
+                      ? "Bạn sẽ không thể xem lại tin nhắn trong nhóm này sau khi rời nhóm?"
+                      : "Toàn bộ nội dung cuộc trò chuyện sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác."}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel className="hover:bg-muted cursor-pointer rounded">
-                    Không
+                    Hủy
                   </AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={() => handleDeleteConvo(activeConversationId)}
+                    onClick={handleAction}
                     className="text-white bg-destructive/50 hover:bg-destructive cursor-pointer rounded"
                   >
-                    Xóa
+                    {type === "leave_group" ? "Rời nhóm" : "Xóa"}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

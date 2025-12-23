@@ -69,7 +69,7 @@ export const sendGroupMess = async (req, res) => {
 
     const senderId = req.user._id; //req.user._id;
     const conversation = req.conversation; // được lưu lại vào trong req từ middleware
-    console.log(image);
+
     if (!content && !image) {
       return res
         .status(400)

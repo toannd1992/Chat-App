@@ -10,6 +10,14 @@ export const useThemeStore = create<ThemeState>()(
       isOpenCreateGroup: false,
       isOpenListFriend: false,
       isDark: false,
+      clearState: () => {
+        set({
+          isOpenProfile: false,
+          isOpenAddFriend: false,
+          isOpenCreateGroup: false,
+          isOpenListFriend: false,
+        });
+      },
       toggleTheme: () => {
         const newValue = !get().isDark;
         set({ isDark: newValue });

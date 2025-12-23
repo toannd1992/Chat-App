@@ -57,6 +57,23 @@ io.on("connection", async (socket) => {
       });
     }
   });
+  // lắng nghe sự kiên xóa conversation
+  socket.on("delete-conversation", ({ conversation }) => {
+    // thông báo trong room
+    socket
+      .to(conversation._id.toString())
+      .emit("remove-conversation", { conversation });
+  });
+  // lắng nghe sự kiên leave-group
+  socket.on("leave-group", ({ conversation }) => {
+    // ra khỏi room
+    socket.leave(conversation._id.toString());
+    // thông báo trong room
+
+    socket
+      .to(conversation._id.toString())
+      .emit("member-leave", { conversation });
+  });
   // trạng thái đã xem
   socket.on("mark-as-seen", async ({ conversationId }) => {
     try {
@@ -164,6 +181,7 @@ io.on("connection", async (socket) => {
       });
     }
   });
+
   socket.on("disconnect", () => {
     userOnline.delete(user._id.toString()); // xoa
     io.emit("user-online", Array.from(userOnline.keys()));

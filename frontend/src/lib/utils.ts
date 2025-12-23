@@ -6,7 +6,7 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-export const nameProject = "Chat App";
+export const nameProject = "Halu";
 
 export const getInfo = (
   convo: Conversation,

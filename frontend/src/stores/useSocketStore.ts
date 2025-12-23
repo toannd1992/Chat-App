@@ -31,9 +31,21 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     socket.on("user-online", (userId) => {
       set({ userOnline: userId });
     });
-    // lắng nghe sự kiện gửi đồng ý kết bạn
+    // lắng nghe sự kiện tạo group
     socket.on("new-group", ({ conversation }) => {
       // thêm conversation
+      useChatStore.getState().updateConversation(conversation);
+    });
+    // lắng nghe sự kiện xoas conversation
+    socket.on("remove-conversation", ({ conversation }) => {
+      // thêm conversation
+      useChatStore.getState().removeConversation(conversation);
+    });
+
+    // lắng nghe sự kiện leave-success
+    socket.on("member-leave", ({ conversation }) => {
+      // thêm conversation
+
       useChatStore.getState().updateConversation(conversation);
     });
     // new message

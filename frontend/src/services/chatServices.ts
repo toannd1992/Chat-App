@@ -18,7 +18,7 @@ interface IsendGroupMess {
   imgUrl?: string | null;
 }
 
-interface ICreateGroup {
+interface ICreateConversation {
   type: string;
 
   memberIds: string[];
@@ -62,10 +62,22 @@ export const chatServices = {
     });
     return res.data;
   },
-  createGroup: async ({ type, memberIds, name }: ICreateGroup) => {
+  createConversation: async ({
+    type,
+    memberIds,
+    name,
+  }: ICreateConversation) => {
     const res = await api.post(
       "/conversation/",
       { type, memberIds, name },
+      { withCredentials: true }
+    );
+    return res.data;
+  },
+  deleteConversation: async (conversationId: string, type: string) => {
+    const res = await api.post(
+      `/conversation/${conversationId}/delete`,
+      { type },
       { withCredentials: true }
     );
     return res.data;

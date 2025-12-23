@@ -158,7 +158,7 @@ const AddFriendModal = ({ isOpen, onClose }: AddFriendModalProps) => {
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="rounded pr-8"
+                  className="rounded pr-8 dark:shadow-white/20"
                 />
                 <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
               </div>

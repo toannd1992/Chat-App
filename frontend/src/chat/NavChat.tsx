@@ -16,6 +16,8 @@ import type { Conversation, Participant } from "@/types/typeChat";
 import ChatCard from "./ChatCard";
 import UserAvatar from "./UserAvatar";
 import GroupAvatar from "./GroupAvatar";
+import { Badge } from "@/components/ui/badge";
+import { useFriendStore } from "@/stores/useFriendStore";
 
 const NavChat = () => {
   const { setAddFriend, setCreateGroup, setListFriend } = useThemeStore();
@@ -27,6 +29,7 @@ const NavChat = () => {
     fetchMessages,
   } = useChatStore(); // Lấy danh sách chat
   const { user } = useAuthStore(); // Lấy user hiện tại để lọc tên đối phương
+  const { requestTo } = useFriendStore();
 
   const [value, setValue] = useState("");
   const [open, setOpen] = useState(false);
@@ -175,10 +178,18 @@ const NavChat = () => {
         <Button
           onClick={handleIsOpenAddFriend}
           variant="ghost"
-          className="rounded cursor-pointer"
+          className="rounded cursor-pointer relative"
           title="Thêm bạn"
         >
           <UserPlus2 className="size-4" />
+          {requestTo.length > 0 && (
+            <Badge
+              className="absolute -top-1 -right-1 h-4 min-w-5 rounded-full px-1 font-mono tabular-nums"
+              variant="destructive"
+            >
+              {requestTo.length > 9 ? "9+" : requestTo.length}
+            </Badge>
+          )}
         </Button>
         <Button
           onClick={handleIsOpenCreateGroup}

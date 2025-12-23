@@ -28,7 +28,7 @@ const CreateGroupModal = ({ isOpen, onClose }: CreateGroupModalProps) => {
   const [memberIds, setMemberIds] = useState<string[]>([]);
 
   const { friends, getAllFriend } = useFriendStore();
-  const { createGroup } = useChatStore();
+  const { createConversation } = useChatStore();
   useEffect(() => {
     getAllFriend();
   }, []);
@@ -43,7 +43,7 @@ const CreateGroupModal = ({ isOpen, onClose }: CreateGroupModalProps) => {
   const handleCreateGroup = async () => {
     const type = "group";
     try {
-      await createGroup(type, memberIds, nameGroup);
+      await createConversation(type, memberIds, nameGroup);
     } catch (error) {
       console.error(error);
     } finally {
@@ -65,7 +65,7 @@ const CreateGroupModal = ({ isOpen, onClose }: CreateGroupModalProps) => {
         {/* Group name */}
         <div className="space-y-2">
           <Input
-            className="rounded"
+            className="rounded dark:shadow-white/20"
             placeholder="Nhập tên nhóm..."
             value={nameGroup}
             onChange={(e) => setNameGroup(e.target.value)}
@@ -92,7 +92,7 @@ const CreateGroupModal = ({ isOpen, onClose }: CreateGroupModalProps) => {
                     <Checkbox
                       checked={memberIds.includes(user._id)}
                       onCheckedChange={() => toggleUser(user._id)}
-                      className="cursor-pointer hover:border"
+                      className="cursor-pointer hover:border dark:border-white/30"
                     />
                     <div className="flex items-center gap-3 flex-1">
                       <Avatar className="h-10 w-10">
