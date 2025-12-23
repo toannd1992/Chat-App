@@ -1,17 +1,22 @@
 import { Server } from "socket.io";
 import http from "http";
 import express from "express";
+import dotenv from "dotenv";
 import { socketMidleware } from "../middlewares/socketMidleware.js";
 import { getConversationSocket } from "../controllers/conversationController.js";
 import ConversationModel from "../models/ConversationModel.js";
 
-const app = express();
+dotenv.config();
 
+const app = express();
 const server = http.createServer(app);
+
+const clientUrl = process.env.CLIENT_URL;
+const origins = [clientUrl, clientUrl.replace("https://", "https://www.")];
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL,
+    origin: origins,
     credentials: true,
   },
 });
@@ -33,7 +38,7 @@ io.on("connection", async (socket) => {
   });
   // lắng nghe sự kiên tạo group
   socket.on("create-group", ({ conversation }) => {
-    socket.join(conversation._id);
+    socket.join(conversation._id.toString());
 
     // lọc lấy id thành viên trong nhóm và xem có trong danh sách online k
 
@@ -133,7 +138,7 @@ io.on("connection", async (socket) => {
     "friend:accept-request",
     ({ id, friend, requestId, conversation }) => {
       // join vào phòng
-      socket.join(conversation._id);
+      socket.join(conversation._id.toString());
       // tìm xem người nhận có trong danh sách online k
 
       const receiverSocketId = userOnline.get(id.toString());
