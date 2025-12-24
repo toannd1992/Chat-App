@@ -133,7 +133,7 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
             inputRef.current?.click();
           }}
         >
-          <ImagePlus className="size-6" />
+          <ImagePlus className="size-5" />
         </Button>
 
         <div className="flex-1 relative flex gap-1">

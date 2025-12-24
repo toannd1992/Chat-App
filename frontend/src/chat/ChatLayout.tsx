@@ -63,7 +63,7 @@ const ChatLayout = () => {
   return (
     <>
       <AppSidebar />
-      <SidebarInset className="flex flex-col h-full overflow-hidden ">
+      <SidebarInset className="flex flex-col h-svh overflow-hidden ">
         {/* header */}
         <header className="flex h-18 shrink-0 items-center gap-2 justify-between">
           <div className="flex items-center gap-2 px-4">
@@ -155,7 +155,7 @@ const ChatLayout = () => {
           </div>
         </header>
         {/* body chat */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {activeConversationId ? <BodyMessage /> : <Welcome />}
         </div>
       </SidebarInset>

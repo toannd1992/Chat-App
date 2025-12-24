@@ -109,7 +109,7 @@ const BodyMessage = () => {
         </div>
       )}
       {/* input */}
-      <div className="p-2 border-t ">
+      <div className="p-2 border-t shrink-0">
         <InputMessage conversation={convo} />
       </div>
     </div>

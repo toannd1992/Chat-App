@@ -14,7 +14,7 @@ const Emoji = ({ onChange }: IEmoji) => {
   return (
     <Popover>
       <PopoverTrigger>
-        <Smile className="size-6 cursor-pointer" />
+        <Smile className="size-5 cursor-pointer" />
       </PopoverTrigger>
       <PopoverContent
         side="left"
