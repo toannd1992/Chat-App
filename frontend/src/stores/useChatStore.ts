@@ -82,6 +82,7 @@ export const useChatStore = create<ChatState>()(
       },
       sendDirectMessStore: async (recipientId, content, imgUrl) => {
         try {
+          set({ loadingMessage: true });
           const { activeConversationId } = get();
 
           await chatServices.sendDirectMess({
@@ -97,12 +98,15 @@ export const useChatStore = create<ChatState>()(
           }));
         } catch (error) {
           console.error("Lỗi khi gửi tin nhắn direct", error);
+        } finally {
+          set({ loadingMessage: false });
         }
       },
       sendGroupMessStore: async (content, conversationId, imgUrl) => {
         try {
           const { activeConversationId } = get();
           const convoId = conversationId || activeConversationId;
+          set({ loadingMessage: true });
           if (!convoId) {
             console.error("Không tìm thấy nhóm để gửi tin nhắn");
             return;
@@ -119,6 +123,8 @@ export const useChatStore = create<ChatState>()(
           }));
         } catch (error) {
           console.error("lỗi khi gửi tin nhăn group", error);
+        } finally {
+          set({ loadingMessage: false });
         }
       },
       addMessage: async (message) => {

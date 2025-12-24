@@ -47,21 +47,21 @@ export function SigninForm({
               {/* header */}
               <div className="flex flex-col gap-4 items-center text-center">
                 <a href="/">
-                  <img src="/logo.svg" alt="logo" className="mx-auto"></img>
+                  <img src="logo.svg" alt="logo" className="mx-auto w-16"></img>
+                  <h1 className="text-2xl font-bold">Đăng nhập</h1>
                 </a>
-                <h1 className="text-2xl font-bold">Đăng nhập</h1>
-                <p>Chào mừng quay lại! Hãy đăng nhập để bắt đầu!</p>
+                <p>Chào mừng quay lại! Hãy đăng nhập để trò chuyện!</p>
               </div>
 
               {/* email */}
               <div className="flex flex-col gap-2">
-                <Label htmlFor="email" className="text-sm">
+                <Label htmlFor="email" className="text-sm font-medium">
                   Email đăng nhập
                 </Label>
                 <Input
                   type="email"
                   id="email"
-                  placeholder="m@gmail.com"
+                  placeholder="halu@gmail.com"
                   {...register("email")}
                 />
                 {errors.email && (
@@ -72,7 +72,7 @@ export function SigninForm({
               </div>
               {/* password */}
               <div className="flex flex-col gap-2">
-                <Label htmlFor="password" className="text-sm">
+                <Label htmlFor="password" className="text-sm font-medium">
                   Mật khẩu
                 </Label>
                 <Input
@@ -90,7 +90,7 @@ export function SigninForm({
               <div>
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full cursor-pointer"
                   disabled={isSubmitting}
                 >
                   Đăng nhập

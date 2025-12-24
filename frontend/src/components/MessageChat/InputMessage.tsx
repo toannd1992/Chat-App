@@ -11,8 +11,13 @@ import { toast } from "sonner";
 const InputMessage = ({ conversation }: { conversation: Conversation }) => {
   const { user } = useAuthStore();
   const [value, setValue] = useState<string>("");
-  const { activeConversationId, sendDirectMessStore, sendGroupMessStore } =
-    useChatStore();
+
+  const {
+    loadingMessage,
+    activeConversationId,
+    sendDirectMessStore,
+    sendGroupMessStore,
+  } = useChatStore();
   const [imgView, setImgView] = useState<string | null>(null); // tạo state để quản lý ảnh
   const inputRef = useRef<HTMLInputElement>(null);
   const inputMessage = useRef<HTMLInputElement>(null);
@@ -128,7 +133,7 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
             inputRef.current?.click();
           }}
         >
-          <ImagePlus className="size-4" />
+          <ImagePlus className="size-6" />
         </Button>
 
         <div className="flex-1 relative flex gap-1">
@@ -153,7 +158,7 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
           <Button
             onClick={handleMessage}
             className="hover:scale-105 cursor-pointer transition-smooth bg-gradient-chat"
-            disabled={!value.trim() && !imgView}
+            disabled={(!value.trim() && !imgView) || loadingMessage}
           >
             <Send className="text-white " />
           </Button>

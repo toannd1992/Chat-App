@@ -57,7 +57,8 @@ export const useAuthStore = create<typeStore>()(
           set({ accessToken: accessToken });
           await get().fetchMeStore();
           useChatStore.getState().fetchConversations(); // lấy thông tin conversation
-          useFriendStore.getState().getFriendRequests();
+          useFriendStore.getState().getFriendRequests(); // lấy thông tin requesst
+          useFriendStore.getState().getAllFriend(); // lấy thông tin friend
 
           toast.success(message);
           return message;

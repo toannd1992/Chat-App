@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { cn } from "@/lib/utils";
 import { useFriendStore } from "@/stores/useFriendStore";
@@ -27,11 +27,9 @@ const CreateGroupModal = ({ isOpen, onClose }: CreateGroupModalProps) => {
   const [nameGroup, setNameGroup] = useState("");
   const [memberIds, setMemberIds] = useState<string[]>([]);
 
-  const { friends, getAllFriend } = useFriendStore();
+  const { friends } = useFriendStore();
   const { createConversation } = useChatStore();
-  useEffect(() => {
-    getAllFriend();
-  }, []);
+
   const toggleUser = (userId: string) => {
     setMemberIds((prev) =>
       prev.includes(userId)

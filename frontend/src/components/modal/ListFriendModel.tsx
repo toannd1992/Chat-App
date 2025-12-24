@@ -31,7 +31,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { DialogDescription } from "@radix-ui/react-dialog";
 
 import { useFriendStore } from "@/stores/useFriendStore";
@@ -48,16 +48,13 @@ const ListFriendModel = ({ isOpen, onClose }: ListFriendModalProps) => {
   const [name, setName] = useState("");
   const id = useRef<string | null>(null);
 
-  const { friends, getAllFriend, deleteFriend } = useFriendStore();
+  const { friends, deleteFriend } = useFriendStore();
   const {
     setActiveConversation,
     conversations,
     fetchMessages,
     createConversation,
   } = useChatStore.getState();
-  useEffect(() => {
-    getAllFriend();
-  }, []);
 
   const handleClickFriend = async (id: string) => {
     // lọc conversation để tìm conversationId

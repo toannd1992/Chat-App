@@ -50,15 +50,16 @@ export function SignupForm({
               {/* header */}
               <div className="flex flex-col gap-4 items-center text-center">
                 <a href="/">
-                  <img src="/logo.svg" alt="logo" className="mx-auto"></img>
+                  <img src="logo.svg" alt="logo" className="mx-auto w-16"></img>
+                  <h1 className="text-2xl font-bold">Đăng ký</h1>
                 </a>
-                <h1 className="text-2xl font-bold">Đăng ký</h1>
+
                 <p>Chào mừng bạn! hãy đăng ký để bắt đầu!</p>
               </div>
               {/* họ và tên */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col">
-                  <Label htmlFor="fistname" className="text-sm">
+                  <Label htmlFor="fistname" className="text-sm font-medium">
                     Họ
                   </Label>
                   <Input type="text" id="fistname" {...register("fistname")} />
@@ -69,7 +70,7 @@ export function SignupForm({
                   )}
                 </div>
                 <div className="flex flex-col">
-                  <Label htmlFor="lastname" className="text-sm">
+                  <Label htmlFor="lastname" className="text-sm font-medium">
                     Tên
                   </Label>
                   <Input type="text" id="lastname" {...register("lastname")} />
@@ -82,13 +83,14 @@ export function SignupForm({
               </div>
               {/* email */}
               <div className="flex flex-col gap-2">
-                <Label htmlFor="email" className="text-sm">
-                  Email đăng nhập
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email đăng ký
                 </Label>
                 <Input
                   type="email"
                   id="email"
-                  placeholder="m@gmail.com"
+                  placeholder="halu@gmail.com"
+                  className="text-sm"
                   {...register("email")}
                 />
                 {errors.email && (
@@ -99,12 +101,14 @@ export function SignupForm({
               </div>
               {/* password */}
               <div className="flex flex-col gap-2">
-                <Label htmlFor="password" className="text-sm">
+                <Label htmlFor="password" className="text-sm font-medium">
                   Mật khẩu
                 </Label>
                 <Input
                   type="password"
                   id="password"
+                  placeholder="Mật khẩu phải ít nhất 6 ký tự"
+                  className="text-sm"
                   {...register("password")}
                 />
                 {errors.password && (
@@ -117,7 +121,7 @@ export function SignupForm({
               <div>
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full cursor-pointer"
                   disabled={isSubmitting}
                 >
                   Tạo tài khoản
