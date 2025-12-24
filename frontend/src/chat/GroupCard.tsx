@@ -5,10 +5,12 @@ import { useChatStore } from "@/stores/useChatStore";
 import GroupAvatar from "./GroupAvatar";
 import UnReadCountBadge from "./UnReadCountBadge";
 import { useSocketStore } from "@/stores/useSocketStore";
+import { useSidebar } from "@/components/ui/sidebar";
 
 const GroupCard = ({ convo }: { convo: Conversation }) => {
   const { user } = useAuthStore();
   const { messagesAsSeen } = useSocketStore();
+  const { isMobile, setOpenMobile } = useSidebar();
   const {
     activeConversationId,
     setActiveConversation,
@@ -32,6 +34,9 @@ const GroupCard = ({ convo }: { convo: Conversation }) => {
     if (messagesAsSeen) {
       // Check null
       messagesAsSeen(id);
+    }
+    if (activeConversationId === id && isMobile) {
+      setOpenMobile(false);
     }
     if (!messages[id]) {
       await fetchMessages(id); // lay tin nham khi lick vao hoi thoai

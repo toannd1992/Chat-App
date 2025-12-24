@@ -65,7 +65,7 @@ const ChatLayout = () => {
       <AppSidebar />
       <SidebarInset className="flex flex-col overflow-hidden fixed inset-0 z-0 h-[100dvh] md:relative md:inset-auto md:h-svh ">
         {/* header */}
-        <header className="flex h-16 shrink-0 items-center gap-2 justify-between">
+        <header className="flex h-14 md:h-18 shrink-0 items-center gap-2 justify-between">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1 cursor-pointer" />
             <Separator

@@ -6,8 +6,13 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { Spinner } from "@/components/ui/spinner";
 
 const BodyMessage = () => {
-  const { activeConversationId, conversations, messages, fetchMessages } =
-    useChatStore();
+  const {
+    loadingMessage,
+    activeConversationId,
+    conversations,
+    messages,
+    fetchMessages,
+  } = useChatStore();
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(false); //
   // lấy dữ liệu
@@ -103,11 +108,12 @@ const BodyMessage = () => {
           ))}
         </div>
       </div>
-      {mess.length === 0 && (
-        <div className="flex h-full items-center justify-center text-muted-foreground">
+      {!loadingMessage && mess.length === 0 && (
+        <div className="p-10 flex h-full items-center justify-center text-muted-foreground text-sm">
           Chưa có tin nhắn nào trong cuộc trò chuyện này. Hãy trò chuyện ngay
         </div>
       )}
+
       {/* input */}
       <div className="p-2 border-t shrink-0">
         <InputMessage conversation={convo} />

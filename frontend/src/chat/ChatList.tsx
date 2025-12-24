@@ -7,6 +7,7 @@ import StatusBadge from "./StatusBadge";
 import UnReadCountBadge from "./UnReadCountBadge";
 import { useSocketStore } from "@/stores/useSocketStore";
 import GroupAvatar from "./GroupAvatar";
+import { useSidebar } from "@/components/ui/sidebar";
 
 const ChatList = () => {
   const {
@@ -18,6 +19,7 @@ const ChatList = () => {
   } = useChatStore();
   const { user } = useAuthStore();
   const { userOnline, messagesAsSeen } = useSocketStore();
+  const { isMobile, setOpenMobile } = useSidebar();
 
   if (!conversations || !user) return null;
 
@@ -26,6 +28,9 @@ const ChatList = () => {
     if (messagesAsSeen) {
       // Check null
       messagesAsSeen(id);
+    }
+    if (activeConversationId === id && isMobile) {
+      setOpenMobile(false);
     }
     if (!messages[id]) {
       await fetchMessages(id); // lay tin nham khi lick vao hoi thoai
