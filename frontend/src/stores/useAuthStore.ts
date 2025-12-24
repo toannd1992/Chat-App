@@ -131,9 +131,11 @@ export const useAuthStore = create<typeStore>()(
           if (!user) {
             fetchMeStore(); // nếu k có user thì gọi hàm fetch để lấy lại thông tin
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error("Lỗi khi gọi refresh", error);
-          get().clearState();
+          if (error.response && error.response.status === 401) {
+            get().clearState();
+          }
         } finally {
           set({ loading: false });
         }
