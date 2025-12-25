@@ -1,7 +1,7 @@
 import { useAuthStore } from "@/stores/useAuthStore";
 import type { Conversation } from "@/types/typeChat";
 import { useEffect, useRef, useState } from "react";
-import { Input } from "../ui/input";
+
 import { Button } from "../ui/button";
 import { ImagePlus, Send, X } from "lucide-react";
 import Emoji from "./Emoji";
@@ -20,7 +20,7 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
   } = useChatStore();
   const [imgView, setImgView] = useState<string | null>(null); // tạo state để quản lý ảnh
   const inputRef = useRef<HTMLInputElement>(null);
-  // const inputMessage = useRef<HTMLInputElement>(null);
+
   const inputMessage = useRef<HTMLTextAreaElement>(null);
 
   // Hàm tự động chỉnh chiều cao textarea
