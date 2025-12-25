@@ -43,7 +43,8 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
     name = conversation.group?.name;
   }
   // send tin nhắn
-  const handleMessage = async () => {
+  const handleMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!value.trim() && !imgView) return;
     try {
       if (conversation.type === "direct") {
@@ -66,6 +67,9 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
       setValue("");
       setImgView(null); // set ảnh về null
       if (inputRef.current) inputRef.current.value = ""; // xet value = rỗng
+      setTimeout(() => {
+        inputMessage.current?.focus();
+      }, 10);
     }
   };
   // chuyển đổi ảnh
@@ -157,6 +161,10 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
           <div className="absolute right_2 top-1/2"></div>
           <Button
             onClick={handleMessage}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              handleMessage();
+            }}
             className="hover:scale-105 cursor-pointer transition-smooth bg-gradient-chat"
             disabled={(!value.trim() && !imgView) || loadingMessage}
           >
