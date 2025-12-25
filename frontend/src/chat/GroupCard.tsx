@@ -35,7 +35,7 @@ const GroupCard = ({ convo }: { convo: Conversation }) => {
       // Check null
       messagesAsSeen(id);
     }
-    if (activeConversationId === id && isMobile) {
+    if (isMobile) {
       setOpenMobile(false);
     }
     if (!messages[id]) {
