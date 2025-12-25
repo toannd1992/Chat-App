@@ -20,17 +20,33 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
   } = useChatStore();
   const [imgView, setImgView] = useState<string | null>(null); // tạo state để quản lý ảnh
   const inputRef = useRef<HTMLInputElement>(null);
-  const inputMessage = useRef<HTMLInputElement>(null);
+  // const inputMessage = useRef<HTMLInputElement>(null);
+  const inputMessage = useRef<HTMLTextAreaElement>(null);
+
+  // Hàm tự động chỉnh chiều cao textarea
+  const adjustHeight = () => {
+    const el = inputMessage.current;
+    if (el) {
+      el.style.height = "auto"; // Reset về auto để tính toán lại từ đầu (tránh bị kẹt chiều cao cũ)
+      el.style.height = `${Math.min(el.scrollHeight, 150)}px`; // Set chiều cao mới (Max 150px thì scroll)
+    }
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
       if (inputMessage.current) {
+        setValue("");
+        inputMessage.current.style.height = "auto";
         inputMessage.current?.focus({ preventScroll: true });
       }
     }, 300);
 
     return () => clearTimeout(timer);
   }, [activeConversationId]);
+  // mỗi khi value thay đổi chỉnh lại chiều cao
+  useEffect(() => {
+    adjustHeight();
+  }, [value]);
 
   if (!user) return;
 
@@ -96,17 +112,22 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
     }
   };
 
-  const enter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  //
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter") {
+      // nhấn Shift + Enter xuống dòng
+      if (e.shiftKey) {
+        return;
+      }
+      // nhấn enter gửi tin nhắn
       e.preventDefault();
       if (loadingMessage) return;
       handleMessage();
     }
   };
-
   return (
     <div className="flex flex-col gap-2 w-full">
-      {/* Hiện ảnh */}
+      {/* hiện ảnh */}
       {imgView && (
         <div className="relative w-20 h-20 p-3">
           <img
@@ -123,55 +144,67 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
         </div>
       )}
       {/*  Input */}
-      <div className="flex gap-1 items-center">
+      <div className="flex gap-1 items-end">
         <input
           type="file"
           className="hidden"
           ref={inputRef}
           onChange={handleImage}
         />
+
         <Button
           asChild
           variant="ghost"
           size="icon"
-          className="size-4 hover:bg-primary/10 transition-smooth cursor-pointer"
-          onClick={() => {
-            inputRef.current?.click();
-          }}
+          className="hover:bg-primary/10 size-4 "
         >
-          <ImagePlus className="size-5" />
+          <Emoji onChange={(emoji) => setValue(`${value}${emoji}`)} />
         </Button>
+        {/* emoji */}
 
-        <div className="flex-1 relative flex gap-1">
-          <Input
-            value={value}
-            ref={inputMessage}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={enter}
-            placeholder={`Nhập @, tin nhắn tới ${name}`}
-            className=" rounded focus-visible:border-none pr-20 h-9 bg-white border-border/50 focus:none transition-smooth resize-none"
-          ></Input>
+        <textarea
+          id="message-input"
+          name="message"
+          aria-label="Nhập tin nhắn"
+          autoComplete="off"
+          ref={inputMessage}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={`Nhập @, tin nhắn tới ${name}`}
+          rows={1}
+          className="
+                    flex w-full rounded-md bg-transparent px-3 py-1.5 text-sm 
+                    placeholder:text-muted-foreground focus-visible:outline-none 
+                    disabled:cursor-not-allowed disabled:opacity-50 
+                    resize-none overflow-y-auto min-h-[36px] max-h-[150px]
+                    transition-all duration-200 beautiful-scrollbar
+                "
+        />
+        {!value ? (
           <Button
             asChild
-            variant="ghost"
+            variant="completedGhost"
             size="icon"
-            className="hover:bg-primary/10 size-4"
+            className="size-4 hover:bg-primary/10 transition-smooth cursor-pointer"
+            onClick={() => {
+              inputRef.current?.click();
+            }}
           >
-            <Emoji onChange={(emoji) => setValue(`${value}${emoji}`)} />
+            <ImagePlus className="size-5 mb-2.5" />
           </Button>
-          {/* emoji */}
-          <div className="absolute right_2 top-1/2"></div>
+        ) : (
           <Button
             onMouseDown={(e) => {
               e.preventDefault();
               handleMessage();
             }}
-            className="hover:scale-105 cursor-pointer transition-smooth bg-gradient-chat"
+            className="hover:scale-105 cursor-pointer transition-smooth bg-gradient-chat h-8 mb-1"
             disabled={(!value.trim() && !imgView) || loadingMessage}
           >
             <Send className="text-white " />
           </Button>
-        </div>
+        )}
       </div>
     </div>
   );

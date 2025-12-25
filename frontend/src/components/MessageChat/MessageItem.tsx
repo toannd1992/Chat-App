@@ -109,7 +109,7 @@ const MessageItem = ({
             </a>
           )}
           {/* hiển thị nội dung */}
-          <p className="text-sm leading-relaxed break-words">
+          <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
             {message.content}
           </p>
         </Card>
