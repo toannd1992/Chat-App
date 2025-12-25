@@ -63,14 +63,19 @@ const ChatLayout = () => {
   };
   const viewportHeight = useVisualViewport();
 
-  //  kiểm tra có phải mobile không để áp dụng style
-
-  const mobileStyle = isMobile ? { height: `${viewportHeight}px` } : {};
   return (
     <>
       <AppSidebar />
       <SidebarInset
-        style={mobileStyle}
+        style={{
+          height: isMobile ? `${viewportHeight}px` : "100%",
+
+          position: isMobile ? "fixed" : "relative",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+        }}
         className="flex flex-col overflow-hidden bg-background w-full fixed inset-0 z-0  md:relative md:inset-auto md:h-svh "
       >
         {/* header */}

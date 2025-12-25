@@ -1,37 +1,40 @@
 import { useEffect, useState } from "react";
 
 export function useVisualViewport() {
-  const [viewportHeight, setViewportHeight] = useState<number>(0);
+  const [viewportHeight, setViewportHeight] = useState<number>(
+    window.innerHeight
+  );
 
   useEffect(() => {
-    // Hàm cập nhật chiều cao
-    const updateHeight = () => {
-      if (window.visualViewport) {
-        // Lấy chiều cao thực tế (đã trừ đi bàn phím)
-        setViewportHeight(window.visualViewport.height);
-      } else {
-        setViewportHeight(window.innerHeight);
-      }
+    const handleResize = () => {
+      // 1. Lấy chiều cao thực tế
+      const height = window.visualViewport
+        ? window.visualViewport.height
+        : window.innerHeight;
+      setViewportHeight(height);
+
+      // 2. 🔥 QUAN TRỌNG: Ép cửa sổ về đỉnh (0,0) để Header không bị đẩy lên
+      window.scrollTo(0, 0);
     };
 
-    // Chạy lần đầu
-    updateHeight();
-
-    // Lắng nghe sự kiện resize và scroll của visualViewport
-    // Đây là API chuẩn để xử lý bàn phím ảo
+    // Lắng nghe visualViewport (API chuẩn cho Mobile)
     if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", updateHeight);
-      window.visualViewport.addEventListener("scroll", updateHeight);
+      window.visualViewport.addEventListener("resize", handleResize);
+      window.visualViewport.addEventListener("scroll", handleResize);
     }
 
-    window.addEventListener("resize", updateHeight);
+    // Fallback cho window
+    window.addEventListener("resize", handleResize);
+
+    // Chạy ngay lần đầu
+    handleResize();
 
     return () => {
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener("resize", updateHeight);
-        window.visualViewport.removeEventListener("scroll", updateHeight);
+        window.visualViewport.removeEventListener("resize", handleResize);
+        window.visualViewport.removeEventListener("scroll", handleResize);
       }
-      window.removeEventListener("resize", updateHeight);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
