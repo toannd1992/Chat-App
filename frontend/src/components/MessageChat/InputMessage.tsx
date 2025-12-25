@@ -45,6 +45,7 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
   // send tin nhắn
   const handleMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (loadingMessage) return;
     if (!value.trim() && !imgView) return;
     try {
       if (conversation.type === "direct") {
@@ -98,6 +99,7 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
   const enter = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
+      if (loadingMessage) return;
       handleMessage();
     }
   };
@@ -160,7 +162,6 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
           {/* emoji */}
           <div className="absolute right_2 top-1/2"></div>
           <Button
-            onClick={handleMessage}
             onMouseDown={(e) => {
               e.preventDefault();
               handleMessage();
