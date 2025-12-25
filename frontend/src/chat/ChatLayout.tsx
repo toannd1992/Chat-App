@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarTrigger,
-  useSidebar, // Import hook này
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -63,7 +63,7 @@ const ChatLayout = () => {
   return (
     <>
       <AppSidebar />
-      <SidebarInset className="flex flex-col overflow-hidden fixed inset-0 z-0 h-[100dvh] md:relative md:inset-auto md:h-svh ">
+      <SidebarInset className="flex flex-col overflow-hidden bg-background w-full fixed inset-0 z-0 h-[100dvh] md:relative md:inset-auto md:h-svh ">
         {/* header */}
         <header className="flex h-14 md:h-18 shrink-0 items-center gap-2 justify-between">
           <div className="flex items-center gap-2 px-4">
