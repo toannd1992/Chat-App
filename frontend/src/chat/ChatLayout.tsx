@@ -30,6 +30,7 @@ import { useChatStore } from "@/stores/useChatStore";
 import { Ellipsis } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useVisualViewport } from "@/hooks/useVisualViewport";
 const ChatLayout = () => {
   const { activeConversationId, conversations, deleteConversation } =
     useChatStore();
@@ -60,10 +61,18 @@ const ChatLayout = () => {
 
     setType(null);
   };
+  const viewportHeight = useVisualViewport();
+
+  //  kiểm tra có phải mobile không để áp dụng style
+
+  const mobileStyle = isMobile ? { height: `${viewportHeight}px` } : {};
   return (
     <>
       <AppSidebar />
-      <SidebarInset className="flex flex-col overflow-hidden bg-background w-full fixed inset-0 z-0 h-[100dvh] md:relative md:inset-auto md:h-svh ">
+      <SidebarInset
+        style={mobileStyle}
+        className="flex flex-col overflow-hidden bg-background w-full fixed inset-0 z-0  md:relative md:inset-auto md:h-svh "
+      >
         {/* header */}
         <header className="flex h-14 md:h-18 shrink-0 items-center gap-2 justify-between">
           <div className="flex items-center gap-2 px-4">

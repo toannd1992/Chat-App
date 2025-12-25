@@ -362,3 +362,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden; /* Cấm scroll ở body */
+    overscroll-behavior: none; /* Cấm hiệu ứng kéo dãn cao su trên iOS */
+    position: fixed; /* Ghim chặt body lại */
+  }
+
+  #root {
+    height: 100%;
+    width: 100%;
+  }
+}
