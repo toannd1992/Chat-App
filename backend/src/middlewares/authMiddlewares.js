@@ -4,39 +4,25 @@ import User from "../models/UserModel.js";
 export const protectedRouter = (req, res, next) => {
   try {
     // lấy accessToken từ header
-    const header = req.headers.authorization;
 
-    const token = header && header.split(" ")[1];
+    const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
       return res.status(401).json({
-        message: " Không tìm thấy accessToken",
+        message: "Unauthorized",
       });
     }
     // xác thực access token từ jwt
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
-      if (err) {
-        console.log(err);
-        return res
-          .status(403)
-          .json({ message: " token đã hết hạn hoặc không đúng" });
-      }
-      // tìm user trong database
-      const user = await User.findById(decoded.userId).select(
-        "-hashedPassword"
-      );
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-      if (!user) {
-        return res.status(404).json({ message: "người dùng không tồn tại" });
-      }
+    // trả user id về trong req.user
+    req.user = {
+      _id: decoded.userId,
+    };
 
-      // trả user về trong req.user
-      req.user = user;
-
-      next();
-    });
+    next();
   } catch (error) {
     console.error("lỗi khi xác thực Middlewares", error);
-    return res.status(500).json({ message: " lỗi hệ thống" });
+    return res.status(500).json({ message: " lỗi hệ thống Unauthorized" });
   }
 };

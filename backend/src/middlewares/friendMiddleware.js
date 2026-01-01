@@ -1,4 +1,4 @@
-import FriendModel from "../models/FriendModel.js";
+import { friendRepo } from "../repositories/authRepo.js";
 
 export const friendMiddleware = async (req, res, next) => {
   try {
@@ -14,7 +14,7 @@ export const friendMiddleware = async (req, res, next) => {
         [userA, userB] = [userB, userA];
       }
 
-      const checkFriend = await FriendModel.findOne({ userA, userB });
+      const checkFriend = await friendRepo.findOneFriend({ userA, userB });
 
       if (!checkFriend) {
         return res

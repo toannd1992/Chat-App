@@ -61,6 +61,8 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
   // send tin nhắn
   const handleMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    setValue("");
+    setImgView(null); // set ảnh về null
     if (loadingMessage) return;
     if (!value.trim() && !imgView) return;
     try {
@@ -81,8 +83,6 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
       console.error(error);
       toast.error("Lỗi xảy ra khi gửi tin nhắn");
     } finally {
-      setValue("");
-      setImgView(null); // set ảnh về null
       if (inputRef.current) inputRef.current.value = ""; // xet value = rỗng
       setTimeout(() => {
         inputMessage.current?.focus();

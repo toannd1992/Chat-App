@@ -1,11 +1,11 @@
-import ConversationModel from "../models/ConversationModel.js";
+import { convoRepo } from "../repositories/authRepo.js";
 
 export const groupMiddleware = async (req, res, next) => {
   try {
     const { conversationId } = req.body;
     const userId = req.user._id;
 
-    const conversation = await ConversationModel.findById(conversationId);
+    const conversation = await convoRepo.findId(conversationId);
 
     if (!conversation) {
       return res.status(400).json({ message: "Cuộc hội thoại không tồn tại" });

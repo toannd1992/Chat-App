@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/UserModel.js";
+import { authRepo } from "../repositories/authRepo.js";
 
 export const socketMidleware = async (socket, next) => {
   try {
@@ -17,10 +18,7 @@ export const socketMidleware = async (socket, next) => {
         return next(new Error("Token không hợp lệ"));
       }
       // tìm user trong database
-      const user = await User.findById(decoded.userId).select(
-        "-hashedPassword"
-      );
-
+      const user = await authRepo.infoUserId({ _id: decoded.userId });
       if (!user) {
         return next(new Error("Người dùng không tồn tại"));
       }

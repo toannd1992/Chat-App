@@ -38,6 +38,7 @@ export const useChatStore = create<ChatState>()(
         try {
           const { activeConversationId, messages } = get();
           const { user } = useAuthStore.getState();
+
           if (!user) return;
           const id = conversationId ?? activeConversationId;
           if (!id) return;
@@ -209,10 +210,12 @@ export const useChatStore = create<ChatState>()(
             name,
           });
           if (conversation) {
-            const { updateConversation, setActiveConversation } = get();
+            const { updateConversation, setActiveConversation, fetchMessages } =
+              get();
             const socket = useSocketStore.getState().socket;
             updateConversation(conversation);
             setActiveConversation(conversation._id);
+            fetchMessages(conversation._id);
 
             // bắn socket
             socket?.emit("create-group", { conversation });
