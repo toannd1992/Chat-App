@@ -1,18 +1,130 @@
-import { io } from "../socket/index.js";
+import mongoose from "mongoose";
+import { io, emitToRoom } from "../socket/index.js";
 import { convoRepo, messRepo } from "../repositories/authRepo.js";
 import AppError from "../libs/appError.js";
 import cloudinary from "../libs/cloudinary.js";
 import { emitMessage } from "../helpers/messageHelper.js";
 
+const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "😡"];
+const MAX_CONTENT = 5000;
+
+// chỉ cho reply tin nhắn thuộc cùng hội thoại
+const resolveReplyTo = async (replyTo, conversationId) => {
+  if (!replyTo || !mongoose.Types.ObjectId.isValid(replyTo)) return null;
+  const target = await messRepo.findById(replyTo);
+  if (!target || target.conversationId.toString() !== conversationId.toString()) {
+    return null;
+  }
+  return target._id;
+};
+
+// lấy tin nhắn và kiểm tra người dùng có trong hội thoại không
+const getMessageForMember = async (messageId, userId) => {
+  if (!mongoose.Types.ObjectId.isValid(messageId)) {
+    throw new AppError(400, "ID tin nhắn không hợp lệ");
+  }
+  const message = await messRepo.findById(messageId);
+  if (!message) throw new AppError(404, "Không tìm thấy tin nhắn");
+
+  const conversation = await convoRepo.findId(message.conversationId);
+  const isMember = conversation?.participants.some(
+    (p) => p.userId.toString() === userId.toString()
+  );
+  if (!isMember) throw new AppError(403, "Bạn không có quyền với tin nhắn này");
+  return message;
+};
+
+// phát bản cập nhật của tin nhắn cho mọi người trong hội thoại
+const broadcastUpdate = async (message, lastMessageContent) => {
+  const populated = await messRepo.populateMessage(message);
+  const conversation = await convoRepo.updateLastMessageContent({
+    conversationId: message.conversationId,
+    messageId: message._id,
+    content: lastMessageContent,
+  });
+  emitToRoom(message.conversationId, "message-updated", {
+    message: populated,
+    lastMessage: conversation?.lastMessage ?? null,
+  });
+  return populated;
+};
+
 export const messageService = {
+  edit: async ({ params, body, user }) => {
+    const content = typeof body.content === "string" ? body.content.trim() : "";
+    if (!content) throw new AppError(400, "Nội dung không được để trống");
+    if (content.length > MAX_CONTENT) {
+      throw new AppError(400, "Tin nhắn quá dài");
+    }
+    const message = await getMessageForMember(params.messageId, user._id);
+    if (message.senderId.toString() !== user._id.toString()) {
+      throw new AppError(403, "Chỉ người gửi mới được sửa tin nhắn");
+    }
+    if (message.deletedAt) {
+      throw new AppError(400, "Tin nhắn đã được thu hồi");
+    }
+    message.content = content;
+    message.editedAt = new Date();
+    await message.save();
+    return { message: await broadcastUpdate(message, content) };
+  },
+
+  recall: async ({ params, user }) => {
+    const message = await getMessageForMember(params.messageId, user._id);
+    if (message.senderId.toString() !== user._id.toString()) {
+      throw new AppError(403, "Chỉ người gửi mới được thu hồi tin nhắn");
+    }
+    if (!message.deletedAt) {
+      message.content = "";
+      message.imgUrl = null;
+      message.reactions = [];
+      message.editedAt = null;
+      message.deletedAt = new Date();
+      await message.save();
+    }
+    return {
+      message: await broadcastUpdate(message, "Tin nhắn đã được thu hồi"),
+    };
+  },
+
+  react: async ({ params, body, user }) => {
+    const { emoji } = body;
+    if (!REACTIONS.includes(emoji)) {
+      throw new AppError(400, "Cảm xúc không hợp lệ");
+    }
+    const message = await getMessageForMember(params.messageId, user._id);
+    if (message.deletedAt) {
+      throw new AppError(400, "Tin nhắn đã được thu hồi");
+    }
+    const userId = user._id.toString();
+    const current = message.reactions.find((r) => r.userId.toString() === userId);
+    // bấm lại cùng cảm xúc thì bỏ, khác thì đổi
+    message.reactions = message.reactions.filter(
+      (r) => r.userId.toString() !== userId
+    );
+    if (!current || current.emoji !== emoji) {
+      message.reactions.push({ userId: user._id, emoji });
+    }
+    await message.save();
+    const populated = await messRepo.populateMessage(message);
+    emitToRoom(message.conversationId, "message-updated", {
+      message: populated,
+      lastMessage: null,
+    });
+    return { message: populated };
+  },
+
   sendDirect: async ({ body, user }) => {
-    const { recipientId, conversationId, content, imgUrl: image } = body;
+    const { recipientId, conversationId, content, imgUrl: image, replyTo } = body;
     const senderId = user._id;
 
     let conversation;
     // nếu k có conten và ảnh
     if (!content && !image) {
       throw new AppError(400, "Nội dung và ảnh không thể để trống");
+    }
+    if (content && content.length > MAX_CONTENT) {
+      throw new AppError(400, "Tin nhắn quá dài");
     }
     // kiểm tra ảnh nếu có thì upload
     let imgUrl = null;
@@ -60,6 +172,7 @@ export const messageService = {
       senderId: senderId,
       content,
       imgUrl,
+      replyTo: await resolveReplyTo(replyTo, conversation._id),
     });
 
     // update lại conversation khi tin nhắn đc gửi
@@ -77,7 +190,7 @@ export const messageService = {
   },
 
   sendGroup: async ({ body, user, conversation }) => {
-    const { conversationId, content, imgUrl: image } = body;
+    const { conversationId, content, imgUrl: image, replyTo } = body;
 
     const senderId = user._id; //req.user._id;
     // được lưu lại vào trong req từ middleware
@@ -98,6 +211,7 @@ export const messageService = {
       senderId: senderId,
       content,
       imgUrl,
+      replyTo: await resolveReplyTo(replyTo, conversation._id),
     });
 
     // update lại conversation khi tin nhắn đc gửi

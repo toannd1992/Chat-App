@@ -94,6 +94,18 @@ io.on("connection", async (socket) => {
     }
   });
 
+  // đang nhập: chỉ chuyển tiếp cho người trong cùng hội thoại, không lưu DB
+  socket.on("typing", ({ conversationId, isTyping } = {}) => {
+    const room = String(conversationId ?? "");
+    if (!room || !socket.rooms.has(room)) return;
+    socket.to(room).emit("typing", {
+      conversationId: room,
+      userId,
+      displayName: user.displayName,
+      isTyping: Boolean(isTyping),
+    });
+  });
+
   socket.on("disconnect", () => {
     const set = userOnline.get(userId);
     if (set) {

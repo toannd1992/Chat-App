@@ -3,9 +3,10 @@ import type { Conversation } from "@/types/typeChat";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "../ui/button";
-import { ImagePlus, Send, X } from "lucide-react";
+import { ImagePlus, Pencil, Reply, Send, X } from "lucide-react";
 import Emoji from "./Emoji";
 import { useChatStore } from "@/stores/useChatStore";
+import { useSocketStore } from "@/stores/useSocketStore";
 import { toast } from "sonner";
 
 const InputMessage = ({ conversation }: { conversation: Conversation }) => {
@@ -17,7 +18,15 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
     activeConversationId,
     sendDirectMessStore,
     sendGroupMessStore,
+    replyingTo,
+    editingMessage,
+    setReplyingTo,
+    setEditingMessage,
+    editMessage,
   } = useChatStore();
+  const emitTyping = useSocketStore((s) => s.emitTyping);
+  const typingRef = useRef(false); // đã báo "đang nhập" chưa
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [imgView, setImgView] = useState<string | null>(null); // tạo state để quản lý ảnh
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -43,6 +52,40 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
 
     return () => clearTimeout(timer);
   }, [activeConversationId]);
+  // báo cho người khác biết mình đang nhập, tự tắt sau 2 giây không gõ
+  const stopTyping = () => {
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    if (typingRef.current) {
+      typingRef.current = false;
+      emitTyping(conversation._id, false);
+    }
+  };
+  const notifyTyping = () => {
+    if (!typingRef.current) {
+      typingRef.current = true;
+      emitTyping(conversation._id, true);
+    }
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(stopTyping, 2000);
+  };
+  // đổi hội thoại hoặc rời khỏi thì dừng
+  useEffect(() => {
+    return () => stopTyping();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation._id]);
+
+  // bấm "Sửa" thì đưa nội dung cũ vào ô nhập
+  useEffect(() => {
+    if (editingMessage) {
+      setValue(editingMessage.content ?? "");
+      inputMessage.current?.focus();
+    }
+  }, [editingMessage]);
+  // trả lời thì đặt con trỏ vào ô nhập
+  useEffect(() => {
+    if (replyingTo) inputMessage.current?.focus();
+  }, [replyingTo]);
+
   // mỗi khi value thay đổi chỉnh lại chiều cao
   useEffect(() => {
     adjustHeight();
@@ -62,9 +105,30 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
   const handleMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (loadingMessage) return;
+
+    // đang sửa tin nhắn
+    if (editingMessage) {
+      const newText = value.trim();
+      if (!newText) return;
+      if (newText === editingMessage.content) {
+        setEditingMessage(null);
+        setValue("");
+        return;
+      }
+      const done = await editMessage(editingMessage._id, newText);
+      if (done) {
+        setValue("");
+      } else {
+        toast.error("Sửa tin nhắn thất bại, vui lòng thử lại");
+      }
+      return;
+    }
+
     if (!value.trim() && !imgView) return;
+    stopTyping();
 
     // giữ lại nội dung để khôi phục nếu gửi lỗi
+    const replyId = replyingTo?._id ?? null;
     const text = value;
     const image = imgView;
     setValue("");
@@ -82,11 +146,12 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
           sent = await sendDirectMessStore(
             targetUserId,
             text,
-            image ?? undefined
+            image ?? undefined,
+            replyId
           );
         }
       } else {
-        sent = await sendGroupMessStore(text, conversation._id, image);
+        sent = await sendGroupMessStore(text, conversation._id, image, replyId);
       }
     } catch (error) {
       console.error(error);
@@ -127,7 +192,17 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
   };
 
   //
+  const cancelEditOrReply = () => {
+    if (editingMessage) setValue("");
+    setEditingMessage(null);
+    setReplyingTo(null);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Escape" && (editingMessage || replyingTo)) {
+      cancelEditOrReply();
+      return;
+    }
     if (e.key === "Enter") {
       // nhấn Shift + Enter xuống dòng
       if (e.shiftKey) {
@@ -141,6 +216,37 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
   };
   return (
     <div className="flex flex-col gap-2 w-full">
+      {/* đang trả lời / đang sửa */}
+      {(replyingTo || editingMessage) && (
+        <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-1.5 text-xs">
+          {editingMessage ? (
+            <Pencil size={14} className="shrink-0" />
+          ) : (
+            <Reply size={14} className="shrink-0" />
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold truncate">
+              {editingMessage
+                ? "Đang sửa tin nhắn"
+                : `Trả lời ${replyingTo?.senderId?.displayName ?? ""}`}
+            </p>
+            {replyingTo && (
+              <p className="truncate text-muted-foreground">
+                {replyingTo.content ||
+                  (replyingTo.imgUrl ? "[Hình ảnh]" : "")}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            title="Hủy"
+            onClick={cancelEditOrReply}
+            className="cursor-pointer rounded-full p-0.5 hover:bg-background"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
       {/* hiện ảnh */}
       {imgView && (
         <div className="relative w-20 h-20 p-3">
@@ -183,7 +289,11 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
           autoComplete="off"
           ref={inputMessage}
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => {
+            setValue(e.target.value);
+            if (e.target.value && !editingMessage) notifyTyping();
+            else stopTyping();
+          }}
           onKeyDown={handleKeyDown}
           placeholder={`Nhập @, tin nhắn tới ${name}`}
           rows={1}

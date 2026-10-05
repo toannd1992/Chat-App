@@ -4,6 +4,7 @@ import InputMessage from "./InputMessage";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Spinner } from "@/components/ui/spinner";
+import { useSocketStore } from "@/stores/useSocketStore";
 
 const BodyMessage = () => {
   const {
@@ -14,6 +15,7 @@ const BodyMessage = () => {
     fetchMessages,
   } = useChatStore();
   const { user } = useAuthStore();
+  const typingUsers = useSocketStore((s) => s.typingUsers);
   const [loading, setLoading] = useState(false); //
   // lấy dữ liệu
   const mess = useMemo(() => {
@@ -78,6 +80,11 @@ const BodyMessage = () => {
     }
   };
 
+  // tên những người khác đang nhập trong hội thoại này
+  const typingNames = Object.entries(typingUsers[activeConversationId ?? ""] ?? {})
+    .filter(([id]) => id !== user?._id)
+    .map(([, name]) => name);
+
   if (!convo) return;
 
   return (
@@ -111,6 +118,13 @@ const BodyMessage = () => {
       {!loadingMessage && mess.length === 0 && (
         <div className="p-10 flex h-full items-center justify-center text-muted-foreground text-sm">
           Chưa có tin nhắn nào trong cuộc trò chuyện này. Hãy trò chuyện ngay
+        </div>
+      )}
+
+      {/* ai đó đang nhập */}
+      {typingNames.length > 0 && (
+        <div className="px-4 py-1 text-xs text-muted-foreground italic shrink-0">
+          {typingNames.join(", ")} đang nhập...
         </div>
       )}
 

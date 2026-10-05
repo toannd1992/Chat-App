@@ -40,6 +40,20 @@ export interface ConversationResponse {
   conversations: Conversation[];
 }
 
+export interface MessageReaction {
+  userId: string;
+  emoji: string;
+}
+
+// tin nhắn được trích dẫn khi reply
+export interface ReplyPreview {
+  _id: string;
+  content: string | null;
+  imgUrl?: string | null;
+  deletedAt?: string | null;
+  senderId?: { _id: string; displayName: string } | null;
+}
+
 export interface Message {
   _id: string;
   conversationId: string;
@@ -49,4 +63,8 @@ export interface Message {
   updatedAt?: string | null;
   createdAt: string;
   isOwn?: boolean;
+  replyTo?: ReplyPreview | null;
+  editedAt?: string | null;
+  deletedAt?: string | null;
+  reactions?: MessageReaction[];
 }

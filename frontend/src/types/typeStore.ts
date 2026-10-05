@@ -1,5 +1,5 @@
 import type { Socket } from "socket.io-client";
-import type { Conversation, Message } from "./typeChat";
+import type { Conversation, LastMessage, Message } from "./typeChat";
 import type { FriendRequest, typeUser } from "./typeUser";
 
 export interface typeStore {
@@ -85,14 +85,24 @@ export interface ChatState {
   sendDirectMessStore: (
     recipientId: string,
     content: string,
-    conversationId?: string,
-    imgUrl?: string | null
+    imgUrl?: string | null,
+    replyTo?: string | null
   ) => Promise<boolean>;
   sendGroupMessStore: (
     content: string,
     conversationId?: string,
-    imgUrl?: string | null
+    imgUrl?: string | null,
+    replyTo?: string | null
   ) => Promise<boolean>;
+  // trả lời / sửa / thu hồi / cảm xúc
+  replyingTo: Message | null;
+  editingMessage: Message | null;
+  setReplyingTo: (message: Message | null) => void;
+  setEditingMessage: (message: Message | null) => void;
+  updateMessage: (message: Message, lastMessage?: LastMessage | null) => void;
+  editMessage: (messageId: string, content: string) => Promise<boolean>;
+  recallMessage: (messageId: string) => Promise<boolean>;
+  reactMessage: (messageId: string, emoji: string) => Promise<void>;
   // add message
   addMessage: (message: Message) => Promise<void>;
   // update conversation
@@ -112,6 +122,9 @@ export interface ChatState {
 export interface SocketState {
   socket: Socket | null;
   userOnline: string[];
+  // conversationId -> { userId: tên } những người đang nhập
+  typingUsers: Record<string, Record<string, string>>;
+  emitTyping: (conversationId: string, isTyping: boolean) => void;
   connectSocket: () => void;
   disconnectSocket: () => void;
   messagesAsSeen: (conversationId: string) => void;

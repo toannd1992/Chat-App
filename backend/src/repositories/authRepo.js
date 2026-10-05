@@ -186,6 +186,17 @@ export const convoRepo = {
       })
       .populate({ path: "seenBy", select: "displayName avatarUrl" });
   },
+  // sửa / thu hồi tin nhắn cuối thì cập nhật luôn bản xem trước của hội thoại
+  updateLastMessageContent: async ({ conversationId, messageId, content }) => {
+    return await ConversationModel.findOneAndUpdate(
+      { _id: conversationId, "lastMessage._id": messageId.toString() },
+      { $set: { "lastMessage.content": content } },
+      { new: true }
+    ).populate({
+      path: "lastMessage.senderId",
+      select: "displayName avatarUrl",
+    });
+  },
   updateConvo: async ({ conversation, message, isSenderId }) => {
     const senderId = isSenderId._id.toString();
     const updateOperations = {
@@ -194,7 +205,7 @@ export const convoRepo = {
         lastMessageAt: message.createdAt,
         lastMessage: {
           _id: message._id,
-          content: message.content,
+          content: message.content || (message.imgUrl ? "[Hình ảnh]" : ""),
           senderId: isSenderId,
           createdAt: message.createdAt,
         },
@@ -222,24 +233,41 @@ export const convoRepo = {
     });
   },
 };
+// các trường cần populate khi trả tin nhắn về client
+const messagePopulate = [
+  { path: "senderId", select: "displayName avatarUrl email" },
+  {
+    path: "replyTo",
+    select: "content imgUrl senderId deletedAt",
+    populate: { path: "senderId", select: "displayName" },
+  },
+];
+
 export const messRepo = {
   delete: async ({ conversationId }) => {
     await MessageModel.deleteMany({ conversationId });
+  },
+  findById: async (messageId) => {
+    return await MessageModel.findById(messageId);
+  },
+  populateMessage: async (message) => {
+    return await message.populate(messagePopulate);
   },
   findMessage: async ({ conversationId, limit, cursor }) => {
     const filter = { conversationId };
     if (cursor) filter.createdAt = { $lt: new Date(cursor) };
     return await MessageModel.find(filter)
-      .populate("senderId", "displayName avatarUrl email")
+      .populate(messagePopulate)
       .sort({ createdAt: -1 })
       .limit(Number(limit) + 1);
   },
-  create: async ({ conversationId, content, senderId, imgUrl }) => {
+  create: async ({ conversationId, content, senderId, imgUrl, replyTo }) => {
     return await MessageModel.create({
       conversationId,
       senderId,
       content: content || "",
       imgUrl,
-    }).then((data) => data.populate("senderId", "displayName avatarUrl email"));
+      replyTo: replyTo || null,
+    }).then((data) => data.populate(messagePopulate));
   },
 };

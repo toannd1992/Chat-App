@@ -12,14 +12,24 @@ export const useChatStore = create<ChatState>()(
       activeConversationId: null,
       loading: false,
       loadingMessage: false,
+      replyingTo: null,
+      editingMessage: null,
 
-      setActiveConversation: (id) => set({ activeConversationId: id }),
+      // đổi hội thoại thì bỏ trạng thái đang trả lời / đang sửa
+      setActiveConversation: (id) =>
+        set({ activeConversationId: id, replyingTo: null, editingMessage: null }),
+      setReplyingTo: (message) =>
+        set({ replyingTo: message, editingMessage: null }),
+      setEditingMessage: (message) =>
+        set({ editingMessage: message, replyingTo: null }),
       reset: () => {
         set({
           conversations: [],
           messages: {},
           activeConversationId: null,
           loading: false,
+          replyingTo: null,
+          editingMessage: null,
         });
       },
       fetchConversations: async () => {
@@ -80,7 +90,7 @@ export const useChatStore = create<ChatState>()(
           set({ loadingMessage: false });
         }
       },
-      sendDirectMessStore: async (recipientId, content, imgUrl) => {
+      sendDirectMessStore: async (recipientId, content, imgUrl, replyTo) => {
         try {
           set({ loadingMessage: true });
           const { activeConversationId } = get();
@@ -90,7 +100,9 @@ export const useChatStore = create<ChatState>()(
             recipientId,
             content,
             imgUrl,
+            replyTo,
           });
+          set({ replyingTo: null });
           set((state) => ({
             conversations: state.conversations.map((item) =>
               item._id === activeConversationId ? { ...item, seenBy: [] } : item
@@ -104,7 +116,7 @@ export const useChatStore = create<ChatState>()(
           set({ loadingMessage: false });
         }
       },
-      sendGroupMessStore: async (content, conversationId, imgUrl) => {
+      sendGroupMessStore: async (content, conversationId, imgUrl, replyTo) => {
         try {
           const { activeConversationId } = get();
           const convoId = conversationId || activeConversationId;
@@ -117,7 +129,9 @@ export const useChatStore = create<ChatState>()(
             conversationId: convoId,
             content,
             imgUrl,
+            replyTo,
           });
+          set({ replyingTo: null });
           set((state) => ({
             conversations: state.conversations.map((item) =>
               item._id === activeConversationId ? { ...item, seenBy: [] } : item
@@ -129,6 +143,74 @@ export const useChatStore = create<ChatState>()(
           return false;
         } finally {
           set({ loadingMessage: false });
+        }
+      },
+      // thay thế tin nhắn đã đổi (sửa, thu hồi, cảm xúc) và cập nhật bản xem trước
+      updateMessage: (message, lastMessage) => {
+        const { user } = useAuthStore.getState();
+        set((state) => {
+          const current = state.messages[message.conversationId];
+          const messages = current
+            ? {
+                ...state.messages,
+                [message.conversationId]: {
+                  ...current,
+                  items: current.items.map((m) =>
+                    m._id === message._id
+                      ? {
+                          ...message,
+                          isOwn: message.senderId._id === user?._id,
+                        }
+                      : m
+                  ),
+                },
+              }
+            : state.messages;
+          const conversations = lastMessage
+            ? state.conversations.map((c) =>
+                c._id === message.conversationId ? { ...c, lastMessage } : c
+              )
+            : state.conversations;
+          // đang sửa / trả lời đúng tin vừa bị thu hồi thì bỏ
+          const gone = message.deletedAt;
+          return {
+            messages,
+            conversations,
+            editingMessage:
+              gone && state.editingMessage?._id === message._id
+                ? null
+                : state.editingMessage,
+            replyingTo:
+              gone && state.replyingTo?._id === message._id
+                ? null
+                : state.replyingTo,
+          };
+        });
+      },
+      editMessage: async (messageId, content) => {
+        try {
+          await chatServices.editMessage(messageId, content);
+          set({ editingMessage: null });
+          return true;
+        } catch (error) {
+          console.error("Lỗi khi sửa tin nhắn", error);
+          return false;
+        }
+      },
+      recallMessage: async (messageId) => {
+        try {
+          await chatServices.recallMessage(messageId);
+          return true;
+        } catch (error) {
+          console.error("Lỗi khi thu hồi tin nhắn", error);
+          return false;
+        }
+      },
+      reactMessage: async (messageId, emoji) => {
+        try {
+          await chatServices.reactMessage(messageId, emoji);
+        } catch (error) {
+          console.error("Lỗi khi thả cảm xúc", error);
         }
       },
       addMessage: async (message) => {

@@ -1,6 +1,10 @@
+import { useState } from "react";
+import { Pencil, Reply, Smile, Undo2 } from "lucide-react";
 import UserAvatar from "@/chat/UserAvatar";
 import { cn, formatMessageTime } from "@/lib/utils";
 import type { Conversation, Message } from "@/types/typeChat";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useChatStore } from "@/stores/useChatStore";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
 
@@ -12,6 +16,9 @@ interface IMessage {
   lastMessageStatus?: boolean;
 }
 
+const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "😡"];
+const RECALLED_TEXT = "Tin nhắn đã được thu hồi";
+
 const MessageItem = ({
   message,
   index,
@@ -19,6 +26,12 @@ const MessageItem = ({
   convo,
   lastMessageStatus,
 }: IMessage) => {
+  const { user } = useAuthStore();
+  const { setReplyingTo, setEditingMessage, recallMessage, reactMessage } =
+    useChatStore();
+  const [showActions, setShowActions] = useState(false); // bấm vào tin để hiện thanh công cụ (cảm ứng)
+  const [pickerOpen, setPickerOpen] = useState(false);
+
   // hàm lấy id chuẩn
 
   const getSenderId = (msg?: Message): string | null => {
@@ -56,6 +69,41 @@ const MessageItem = ({
     senderAvatar = senderObj.avatarUrl ?? "";
   }
 
+  const isRecalled = Boolean(message.deletedAt);
+  const canEdit = message.isOwn && !isRecalled && !!message.content;
+
+  // gom cảm xúc theo emoji
+  const reactionGroups = REACTIONS.map((emoji) => {
+    const list = (message.reactions ?? []).filter((r) => r.emoji === emoji);
+    return {
+      emoji,
+      count: list.length,
+      mine: list.some((r) => r.userId === user?._id),
+    };
+  }).filter((g) => g.count > 0);
+
+  const closeActions = () => {
+    setPickerOpen(false);
+    setShowActions(false);
+  };
+
+  const handleRecall = async () => {
+    closeActions();
+    if (window.confirm("Thu hồi tin nhắn này với mọi người?")) {
+      await recallMessage(message._id);
+    }
+  };
+
+  const reply = message.replyTo;
+  const replyText = reply
+    ? reply.deletedAt
+      ? RECALLED_TEXT
+      : reply.content || (reply.imgUrl ? "[Hình ảnh]" : "")
+    : "";
+
+  const actionBtn =
+    "p-1 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer";
+
   return (
     <div
       className={cn(
@@ -91,28 +139,164 @@ const MessageItem = ({
           </span>
         )}
 
-        <Card
+        <div
           className={cn(
-            "p-2 px-3 rounded shadow-sm",
-            message.isOwn && !message.imgUrl && "chat-bubble-sent border-0",
-            !message.isOwn && "bg-chat-bubble-received"
+            "flex items-center gap-1",
+            message.isOwn && "flex-row-reverse"
           )}
         >
-          {/* hiển thị ảnh */}
-          {message.imgUrl && (
-            <a href={message.imgUrl} target="_blank" rel="noopener noreferrer">
-              <img
-                className="w-40 h-auto  cursor-pointer"
-                src={message.imgUrl}
-                alt={message._id}
-              ></img>
-            </a>
+          <div className="relative min-w-0">
+            <Card
+              onClick={() => !isRecalled && setShowActions((v) => !v)}
+              className={cn(
+                "p-2 px-3 rounded shadow-sm",
+                isRecalled
+                  ? "bg-transparent border border-dashed text-muted-foreground italic"
+                  : message.isOwn && !message.imgUrl
+                  ? "chat-bubble-sent border-0"
+                  : !message.isOwn && "bg-chat-bubble-received"
+              )}
+            >
+              {isRecalled ? (
+                <p className="text-sm">{RECALLED_TEXT}</p>
+              ) : (
+                <>
+                  {/* trích dẫn tin nhắn được trả lời */}
+                  {reply && (
+                    <div className="mb-1 border-l-2 border-primary/60 pl-2 text-xs opacity-80 max-w-56">
+                      <p className="font-semibold truncate">
+                        {reply.senderId?.displayName ?? ""}
+                      </p>
+                      <p className="truncate">{replyText}</p>
+                    </div>
+                  )}
+                  {/* hiển thị ảnh */}
+                  {message.imgUrl && (
+                    <a
+                      href={message.imgUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <img
+                        className="w-40 h-auto  cursor-pointer"
+                        src={message.imgUrl}
+                        alt={message._id}
+                      ></img>
+                    </a>
+                  )}
+                  {/* hiển thị nội dung */}
+                  <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+                    {message.content}
+                    {message.editedAt && (
+                      <span className="ml-1 text-[10px] opacity-60">
+                        (đã sửa)
+                      </span>
+                    )}
+                  </p>
+                </>
+              )}
+            </Card>
+
+            {/* bảng chọn cảm xúc */}
+            {pickerOpen && (
+              <div
+                className={cn(
+                  "absolute -top-10 z-20 flex gap-1 rounded-full border bg-popover px-2 py-1 shadow-md",
+                  message.isOwn ? "right-0" : "left-0"
+                )}
+              >
+                {REACTIONS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    className="text-lg hover:scale-125 transition-transform cursor-pointer"
+                    onClick={() => {
+                      closeActions();
+                      reactMessage(message._id, emoji);
+                    }}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* thanh công cụ: hiện khi rê chuột hoặc bấm vào tin nhắn */}
+          {!isRecalled && (
+            <div
+              className={cn(
+                "flex items-center shrink-0 transition-opacity focus-within:opacity-100",
+                showActions || pickerOpen
+                  ? "opacity-100"
+                  : "opacity-0 group-hover:opacity-100"
+              )}
+            >
+              <button
+                type="button"
+                title="Thả cảm xúc"
+                className={actionBtn}
+                onClick={() => setPickerOpen((v) => !v)}
+              >
+                <Smile size={16} />
+              </button>
+              <button
+                type="button"
+                title="Trả lời"
+                className={actionBtn}
+                onClick={() => {
+                  closeActions();
+                  setReplyingTo(message);
+                }}
+              >
+                <Reply size={16} />
+              </button>
+              {canEdit && (
+                <button
+                  type="button"
+                  title="Sửa"
+                  className={actionBtn}
+                  onClick={() => {
+                    closeActions();
+                    setEditingMessage(message);
+                  }}
+                >
+                  <Pencil size={16} />
+                </button>
+              )}
+              {message.isOwn && (
+                <button
+                  type="button"
+                  title="Thu hồi"
+                  className={actionBtn}
+                  onClick={handleRecall}
+                >
+                  <Undo2 size={16} />
+                </button>
+              )}
+            </div>
           )}
-          {/* hiển thị nội dung */}
-          <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
-            {message.content}
-          </p>
-        </Card>
+        </div>
+
+        {/* cảm xúc đã thả */}
+        {reactionGroups.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {reactionGroups.map((g) => (
+              <button
+                key={g.emoji}
+                type="button"
+                onClick={() => reactMessage(message._id, g.emoji)}
+                className={cn(
+                  "flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs bg-background/70 cursor-pointer",
+                  g.mine && "border-primary bg-primary/10"
+                )}
+              >
+                <span>{g.emoji}</span>
+                <span>{g.count}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* hiện time ở tin nhắn cuối cùng của chuỗi  */}
         {timed && (

@@ -10,12 +10,14 @@ interface IsendDirectMess {
   conversationId?: string;
   content: string;
   imgUrl?: string | null;
+  replyTo?: string | null;
 }
 
 interface IsendGroupMess {
   conversationId?: string;
   content: string;
   imgUrl?: string | null;
+  replyTo?: string | null;
 }
 
 interface ICreateConversation {
@@ -45,21 +47,41 @@ export const chatServices = {
     conversationId,
     content,
     imgUrl,
+    replyTo,
   }: IsendDirectMess) {
     const res = await api.post("/message/direct", {
       recipientId,
       conversationId,
       content,
       imgUrl,
+      replyTo,
     });
     return res.data;
   },
-  async sendGroupMess({ conversationId, content, imgUrl }: IsendGroupMess) {
+  async sendGroupMess({
+    conversationId,
+    content,
+    imgUrl,
+    replyTo,
+  }: IsendGroupMess) {
     const res = await api.post("/message/group", {
       conversationId,
       content,
       imgUrl,
+      replyTo,
     });
+    return res.data;
+  },
+  async editMessage(messageId: string, content: string) {
+    const res = await api.patch(`/message/${messageId}`, { content });
+    return res.data;
+  },
+  async recallMessage(messageId: string) {
+    const res = await api.post(`/message/${messageId}/recall`);
+    return res.data;
+  },
+  async reactMessage(messageId: string, emoji: string) {
+    const res = await api.post(`/message/${messageId}/reaction`, { emoji });
     return res.data;
   },
   createConversation: async ({

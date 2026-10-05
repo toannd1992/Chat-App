@@ -7,9 +7,42 @@ import { useFriendStore } from "./useFriendStore";
 
 const baseURL = import.meta.env.VITE_SOCKET_URL;
 
+// tự tắt trạng thái "đang nhập" nếu không nhận được sự kiện dừng
+const TYPING_TIMEOUT = 5000;
+const typingTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+const setTyping = (
+  conversationId: string,
+  userId: string,
+  displayName: string,
+  isTyping: boolean
+) => {
+  const key = `${conversationId}:${userId}`;
+  clearTimeout(typingTimers.get(key));
+  typingTimers.delete(key);
+
+  useSocketStore.setState((state) => {
+    const current = { ...(state.typingUsers[conversationId] ?? {}) };
+    if (isTyping) current[userId] = displayName;
+    else delete current[userId];
+    return { typingUsers: { ...state.typingUsers, [conversationId]: current } };
+  });
+
+  if (isTyping) {
+    typingTimers.set(
+      key,
+      setTimeout(
+        () => setTyping(conversationId, userId, displayName, false),
+        TYPING_TIMEOUT
+      )
+    );
+  }
+};
+
 export const useSocketStore = create<SocketState>((set, get) => ({
   socket: null,
   userOnline: [],
+  typingUsers: {},
 
   connectSocket: () => {
     const isSocket = get().socket;
@@ -82,8 +115,18 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
       useChatStore.getState().updateConversation(conversation);
     });
+    // tin nhắn bị sửa / thu hồi / thả cảm xúc
+    socket.on("message-updated", ({ message, lastMessage }) => {
+      useChatStore.getState().updateMessage(message, lastMessage);
+    });
+    // người khác đang nhập
+    socket.on("typing", ({ conversationId, userId, displayName, isTyping }) => {
+      setTyping(conversationId, userId, displayName, isTyping);
+    });
     // new message
     socket.on("new-message", ({ message, conversation, unreadCounts }) => {
+      // người gửi đã gửi xong thì không còn "đang nhập"
+      setTyping(message.conversationId, message.senderId._id, "", false);
       const { activeConversationId, addMessage, updateConversation } =
         useChatStore.getState();
       const { user } = useAuthStore.getState();
@@ -170,6 +213,10 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       useFriendStore.getState().removeFriend(user._id.toString());
       useChatStore.getState().removeConversation(conversation);
     });
+  },
+
+  emitTyping: (conversationId, isTyping) => {
+    get().socket?.emit("typing", { conversationId, isTyping });
   },
 
   disconnectSocket: () => {
