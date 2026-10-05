@@ -284,6 +284,18 @@ export const useChatStore = create<ChatState>()(
           conversations: state.conversations.filter(
             (c) => c._id !== conversation._id
           ),
+          // đang mở hội thoại bị xóa / bị mời ra khỏi nhóm thì đóng lại
+          activeConversationId:
+            state.activeConversationId === conversation._id
+              ? null
+              : state.activeConversationId,
+        }));
+      },
+      patchConversation: (conversation) => {
+        set((state) => ({
+          conversations: state.conversations.map((c) =>
+            c._id === conversation._id ? { ...c, ...conversation } : c
+          ),
         }));
       },
 

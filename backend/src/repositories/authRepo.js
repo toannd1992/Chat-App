@@ -91,7 +91,29 @@ export const requestRepo = {
   },
 };
 
+// các trường cần populate khi trả hội thoại về client
+const conversationPopulate = [
+  { path: "participants.userId", select: "displayName avatarUrl" },
+  { path: "lastMessage.senderId", select: "displayName avatarUrl" },
+  { path: "seenBy", select: "displayName avatarUrl" },
+  {
+    path: "pinnedMessages",
+    select: "content imgUrl senderId deletedAt createdAt",
+    populate: { path: "senderId", select: "displayName" },
+  },
+];
+
 export const convoRepo = {
+  findPopulated: async (conversationId) => {
+    return await ConversationModel.findById(conversationId).populate(
+      conversationPopulate
+    );
+  },
+  update: async (conversationId, update) => {
+    return await ConversationModel.findByIdAndUpdate(conversationId, update, {
+      new: true,
+    }).populate(conversationPopulate);
+  },
   findDirectConvo: async ({ userA, userB }) => {
     return await ConversationModel.findOne({
       type: "direct",
@@ -151,15 +173,7 @@ export const convoRepo = {
       "participants.userId": _id,
     })
       .sort({ lastMessageAt: -1, updatedAt: -1 })
-      .populate({
-        path: "participants.userId",
-        select: "displayName avatarUrl",
-      })
-      .populate({
-        path: "lastMessage.senderId",
-        select: "displayName avatarUrl",
-      })
-      .populate({ path: "seenBy", select: "displayName avatarUrl" });
+      .populate(conversationPopulate);
   },
   findSocketID: async (userId) => {
     return await ConversationModel.find(
@@ -173,7 +187,14 @@ export const convoRepo = {
   leaveGroup: async ({ conversationId, userId }) => {
     return await ConversationModel.findByIdAndUpdate(
       conversationId,
-      { $pull: { participants: { userId } } },
+      {
+        $pull: {
+          participants: { userId },
+          "group.admins": userId,
+          pinnedBy: userId,
+          mutedBy: userId,
+        },
+      },
       { new: true } // trả document khi update
     )
       .populate({
@@ -249,6 +270,16 @@ export const messRepo = {
   },
   findById: async (messageId) => {
     return await MessageModel.findById(messageId);
+  },
+  search: async ({ conversationId, regex, limit }) => {
+    return await MessageModel.find({
+      conversationId,
+      deletedAt: null,
+      content: { $regex: regex, $options: "i" },
+    })
+      .populate("senderId", "displayName avatarUrl")
+      .sort({ createdAt: -1 })
+      .limit(limit);
   },
   populateMessage: async (message) => {
     return await message.populate(messagePopulate);

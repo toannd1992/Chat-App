@@ -57,3 +57,24 @@ export const deleteConversation = async (req, res) => {
     return res.status(statusCode).json({ message });
   }
 };
+
+const handle = (fn) => async (req, res) => {
+  try {
+    const result = await fn(req);
+    return res.status(200).json(result);
+  } catch (error) {
+    const statusCode = error.statusCode || 500;
+    if (statusCode === 500) console.error("lỗi hội thoại", error);
+    const message = statusCode === 500 ? "Lỗi hệ thống máy chủ" : error.message;
+    return res.status(statusCode).json({ message });
+  }
+};
+
+export const addMembers = handle((req) => conversationService.addMembers(req));
+export const removeMember = handle((req) => conversationService.removeMember(req));
+export const renameGroup = handle((req) => conversationService.renameGroup(req));
+export const setAdmin = handle((req) => conversationService.setAdmin(req));
+export const transferOwner = handle((req) => conversationService.transferOwner(req));
+export const setPersonal = handle((req) => conversationService.setPersonal(req));
+export const searchMessages = handle((req) => conversationService.searchMessages(req));
+export const pinMessage = handle((req) => conversationService.pinMessage(req));

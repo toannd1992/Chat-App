@@ -24,8 +24,10 @@ const DirectCard = ({ convo }: { convo: Conversation }) => {
   );
   if (!otherUser) return null;
 
+  const pinned = convo.pinnedBy?.includes(user._id) ?? false;
+  const muted = convo.mutedBy?.includes(user._id) ?? false;
   const unreadCount =
-    convo._id.toString() === activeConversationId
+    convo._id.toString() === activeConversationId || muted
       ? 0
       : convo.unreadCounts[user._id];
   const name = otherUser.userId?.displayName ?? "";
@@ -80,6 +82,8 @@ const DirectCard = ({ convo }: { convo: Conversation }) => {
         </>
       }
       sender={sender}
+    pinned={pinned}
+      muted={muted}
     />
   );
 };

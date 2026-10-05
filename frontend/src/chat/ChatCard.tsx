@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { formatOnlineTime, cn } from "@/lib/utils";
-import { Image } from "lucide-react";
+import { BellOff, Image, Pin } from "lucide-react";
 
 interface ChatCardProps {
   convoId: string;
@@ -12,6 +12,8 @@ interface ChatCardProps {
   leftSection: React.ReactNode;
   subtitle: React.ReactNode;
   sender?: string | null;
+  pinned?: boolean;
+  muted?: boolean;
 }
 
 const ChatCard = ({
@@ -24,6 +26,8 @@ const ChatCard = ({
   leftSection,
   subtitle,
   sender,
+  pinned,
+  muted,
 }: ChatCardProps) => {
   return (
     <Card
@@ -50,7 +54,9 @@ const ChatCard = ({
             >
               {name}
             </h3>
-            <span className="text-xs text-muted-foreground">
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              {muted && <BellOff className="size-3" />}
+              {pinned && <Pin className="size-3" />}
               {timestamp ? formatOnlineTime(timestamp) : ""}
             </span>
           </div>
@@ -60,7 +66,7 @@ const ChatCard = ({
             )}
 
             <div className="truncate flex gap-1 items-center text-muted-foreground ">
-              {subtitle === "Hình ảnh" && (
+              {(subtitle === "Hình ảnh" || subtitle === "[Hình ảnh]") && (
                 <Image className="size-4 flex text-muted-foreground" />
               )}
               {subtitle}

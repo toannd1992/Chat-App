@@ -79,6 +79,8 @@ export interface ChatState {
   loadingMessage: boolean;
   reset: () => void;
   removeConversation: (conversation: Conversation) => void;
+  // cập nhật tại chỗ (không đẩy hội thoại lên đầu danh sách)
+  patchConversation: (conversation: Conversation) => void;
   setActiveConversation: (id: string | null) => void;
   fetchConversations: () => Promise<void>;
   fetchMessages: (conversationId?: string) => Promise<void>;

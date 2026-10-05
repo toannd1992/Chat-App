@@ -46,6 +46,20 @@ const broadcastUpdate = async (message, lastMessageContent) => {
     message: populated,
     lastMessage: conversation?.lastMessage ?? null,
   });
+
+  // tin đang được ghim: thu hồi thì bỏ ghim, sửa thì cập nhật nội dung ghim
+  const convo = await convoRepo.findId(message.conversationId);
+  const isPinned = convo?.pinnedMessages?.some(
+    (id) => id.toString() === message._id.toString()
+  );
+  if (isPinned) {
+    if (message.deletedAt) {
+      await convoRepo.update(convo._id, { $pull: { pinnedMessages: message._id } });
+    }
+    emitToRoom(convo._id, "conversation-updated", {
+      conversation: await convoRepo.findPopulated(convo._id),
+    });
+  }
   return populated;
 };
 

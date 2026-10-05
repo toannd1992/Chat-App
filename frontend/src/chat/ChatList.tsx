@@ -1,6 +1,6 @@
 import { useChatStore } from "@/stores/useChatStore";
 import ChatCard from "./ChatCard";
-import { getInfo } from "../lib/utils";
+import { getInfo, sortConversations } from "../lib/utils";
 import { useAuthStore } from "@/stores/useAuthStore";
 import UserAvatar from "./UserAvatar";
 import StatusBadge from "./StatusBadge";
@@ -39,7 +39,7 @@ const ChatList = () => {
 
   return (
     <div className="flex-1 overflow-y-auto  p-2 space-y-2">
-      {conversations.map((convo) => {
+      {sortConversations(conversations, user._id).map((convo) => {
         // gọi làm lấy thông tin từ conversation ở until
         const info = getInfo(convo, user, activeConversationId);
 
@@ -78,6 +78,8 @@ const ChatList = () => {
               )
             }
             sender={info.sender}
+            pinned={info.pinned}
+            muted={info.muted}
           />
         );
       })}

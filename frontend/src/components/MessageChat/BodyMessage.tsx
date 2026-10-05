@@ -4,6 +4,7 @@ import InputMessage from "./InputMessage";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Spinner } from "@/components/ui/spinner";
+import PinnedBar from "./PinnedBar";
 import { useSocketStore } from "@/stores/useSocketStore";
 
 const BodyMessage = () => {
@@ -90,6 +91,7 @@ const BodyMessage = () => {
   return (
     // content
     <div className="flex flex-col h-full w-full overflow-hidden">
+      <PinnedBar convo={convo} />
       {/* nếu đang tải tin nhắn thì hiện vòng tròn xoay */}
       {loading && (
         <div className="bg-primary-foreground flex items-center justify-center p-4">

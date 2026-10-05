@@ -20,8 +20,10 @@ const GroupCard = ({ convo }: { convo: Conversation }) => {
   if (!user) return null;
   const otherUser = convo.participants.find((item) => item._id !== user._id);
   if (!otherUser) return null;
+  const pinned = convo.pinnedBy?.includes(user._id) ?? false;
+  const muted = convo.mutedBy?.includes(user._id) ?? false;
   const unreadCount =
-    convo._id.toString() === activeConversationId
+    convo._id.toString() === activeConversationId || muted
       ? 0
       : convo.unreadCounts[user._id];
   const name = convo.group?.name || "Group";
@@ -68,6 +70,8 @@ const GroupCard = ({ convo }: { convo: Conversation }) => {
         </>
       }
       sender={sender}
+      pinned={pinned}
+      muted={muted}
     />
   );
 };

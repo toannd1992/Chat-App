@@ -8,12 +8,33 @@ export function cn(...inputs: ClassValue[]) {
 }
 export const nameProject = "Halu";
 
+// lấy thông báo lỗi từ phản hồi của server
+export const apiError = (error: unknown, fallback: string): string => {
+  const message = (error as { response?: { data?: { message?: string } } })
+    ?.response?.data?.message;
+  return message || fallback;
+};
+
+// hội thoại đã ghim đứng trước, giữ nguyên thứ tự còn lại
+export const sortConversations = (
+  conversations: Conversation[],
+  userId?: string
+) => {
+  if (!userId) return conversations;
+  const isPinned = (c: Conversation) => c.pinnedBy?.includes(userId) ?? false;
+  return [...conversations].sort(
+    (a, b) => Number(isPinned(b)) - Number(isPinned(a))
+  );
+};
+
 export const getInfo = (
   convo: Conversation,
   user: typeUser,
   activeConversationId: string | null
 ) => {
   const userSend = "Hãy bắt đầu trò chuyện!";
+  const pinned = convo.pinnedBy?.includes(user._id) ?? false;
+  const muted = convo.mutedBy?.includes(user._id) ?? false;
   const isMe =
     convo.lastMessage?.senderId._id.toString() === user._id.toString();
   if (convo.type === "group") {
@@ -24,9 +45,11 @@ export const getInfo = (
         ? new Date(convo.lastMessage.createdAt)
         : undefined,
       unreadCount:
-        convo._id.toString() === activeConversationId
+        convo._id.toString() === activeConversationId || muted
           ? 0
           : convo.unreadCounts[user._id],
+      pinned,
+      muted,
       sender: !convo.lastMessage
         ? userSend
         : isMe
@@ -46,9 +69,11 @@ export const getInfo = (
       : undefined,
     avatarUrl: otherUser?.userId?.avatarUrl ?? undefined,
     unreadCount:
-      convo._id.toString() === activeConversationId
+      convo._id.toString() === activeConversationId || muted
         ? 0
         : convo.unreadCounts[user._id],
+    pinned,
+    muted,
     sender: !convo.lastMessage ? userSend : isMe ? "Bạn:" : "",
     otherUser,
   };

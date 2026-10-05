@@ -115,6 +115,10 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
       useChatStore.getState().updateConversation(conversation);
     });
+    // nhóm đổi tên / thành viên / quyền / tin ghim, hoặc cài đặt riêng
+    socket.on("conversation-updated", ({ conversation }) => {
+      useChatStore.getState().patchConversation(conversation);
+    });
     // tin nhắn bị sửa / thu hồi / thả cảm xúc
     socket.on("message-updated", ({ message, lastMessage }) => {
       useChatStore.getState().updateMessage(message, lastMessage);

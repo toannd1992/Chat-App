@@ -28,17 +28,28 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useChatStore } from "@/stores/useChatStore";
 import { Ellipsis } from "lucide-react";
+import { toast } from "sonner";
+import GroupInfoModal from "@/components/modal/GroupInfoModal";
+import SearchMessagesModal from "@/components/modal/SearchMessagesModal";
+import { apiError } from "@/lib/utils";
+import { chatServices } from "@/services/chatServices";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useVisualViewport } from "@/hooks/useVisualViewport";
 const ChatLayout = () => {
-  const { activeConversationId, conversations, deleteConversation } =
-    useChatStore();
+  const {
+    activeConversationId,
+    conversations,
+    deleteConversation,
+    patchConversation,
+  } = useChatStore();
   const { user } = useAuthStore();
   const [type, setType] = useState<
     "delete_convo" | "delete_group" | "leave_group" | null
   >(null);
   const { isMobile, setOpenMobile } = useSidebar(); // hook của shadcn
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     if (isMobile) {
@@ -53,6 +64,19 @@ const ChatLayout = () => {
   }, [isMobile, activeConversationId, setOpenMobile]);
 
   const convo = conversations.find((c) => c._id === activeConversationId);
+
+  // ghim hội thoại / tắt thông báo (cài đặt riêng của mình)
+  const togglePersonal = async (setting: "pin" | "mute") => {
+    if (!convo || !user) return;
+    const list = setting === "pin" ? convo.pinnedBy : convo.mutedBy;
+    const current = list?.includes(user._id) ?? false;
+    try {
+      const res = await chatServices.setPersonal(convo._id, setting, !current);
+      if (res.conversation) patchConversation(res.conversation);
+    } catch (error) {
+      toast.error(apiError(error, "Thao tác thất bại, vui lòng thử lại"));
+    }
+  };
 
   const handleAction = () => {
     if (type) {
@@ -100,13 +124,37 @@ const ChatLayout = () => {
                     <Ellipsis className=" p-1 size-6 text-muted-foreground rounded cursor-pointer hover:bg-muted-foreground/30" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-35" align="start">
+                <DropdownMenuContent className="w-44" align="end">
                   <DropdownMenuGroup>
-                    <DropdownMenuItem className="cursor-pointer">
-                      Ghim hội thoại
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => setSearchOpen(true)}
+                    >
+                      Tìm tin nhắn
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
-                      Ẩn trò chuyện
+                    {convo.type === "group" && (
+                      <DropdownMenuItem
+                        className="cursor-pointer"
+                        onClick={() => setInfoOpen(true)}
+                      >
+                        Thông tin nhóm
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => togglePersonal("pin")}
+                    >
+                      {convo.pinnedBy?.includes(user?._id ?? "")
+                        ? "Bỏ ghim hội thoại"
+                        : "Ghim hội thoại"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => togglePersonal("mute")}
+                    >
+                      {convo.mutedBy?.includes(user?._id ?? "")
+                        ? "Bật thông báo"
+                        : "Tắt thông báo"}
                     </DropdownMenuItem>
                     {/* xóa hội thoại */}
                     {convo.type === "direct" ? (
@@ -140,6 +188,20 @@ const ChatLayout = () => {
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
+            )}
+            {convo && (
+              <SearchMessagesModal
+                conversationId={convo._id}
+                isOpen={searchOpen}
+                onClose={() => setSearchOpen(false)}
+              />
+            )}
+            {convo?.type === "group" && infoOpen && (
+              <GroupInfoModal
+                convo={convo}
+                isOpen={infoOpen}
+                onClose={() => setInfoOpen(false)}
+              />
             )}
             <AlertDialog open={!!type} onOpenChange={() => setType(null)}>
               <AlertDialogContent>

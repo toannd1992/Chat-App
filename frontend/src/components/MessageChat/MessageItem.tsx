@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { Pencil, Reply, Smile, Undo2 } from "lucide-react";
+import { Pencil, Pin, PinOff, Reply, Smile, Undo2 } from "lucide-react";
+import { chatServices } from "@/services/chatServices";
+import { toast } from "sonner";
+import { apiError } from "@/lib/utils";
 import UserAvatar from "@/chat/UserAvatar";
 import { cn, formatMessageTime } from "@/lib/utils";
 import type { Conversation, Message } from "@/types/typeChat";
@@ -70,6 +73,18 @@ const MessageItem = ({
   }
 
   const isRecalled = Boolean(message.deletedAt);
+  const isPinned = (convo.pinnedMessages ?? []).some(
+    (p) => p?._id === message._id
+  );
+
+  const togglePin = async () => {
+    closeActions();
+    try {
+      await chatServices.pinMessage(message._id, !isPinned);
+    } catch (error) {
+      toast.error(apiError(error, "Ghim tin nhắn thất bại"));
+    }
+  };
   const canEdit = message.isOwn && !isRecalled && !!message.content;
 
   // gom cảm xúc theo emoji
@@ -250,6 +265,14 @@ const MessageItem = ({
                 }}
               >
                 <Reply size={16} />
+              </button>
+              <button
+                type="button"
+                title={isPinned ? "Bỏ ghim" : "Ghim"}
+                className={actionBtn}
+                onClick={togglePin}
+              >
+                {isPinned ? <PinOff size={16} /> : <Pin size={16} />}
               </button>
               {canEdit && (
                 <button

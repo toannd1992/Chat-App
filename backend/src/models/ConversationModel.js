@@ -27,6 +27,13 @@ const groupSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    // phó nhóm: được thêm/xóa thành viên và đổi tên nhóm
+    admins: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   {
     _id: false,
@@ -89,6 +96,13 @@ const conversationSchema = new mongoose.Schema(
       of: Number,
       default: {},
     },
+    // cài đặt riêng của từng người
+    pinnedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    mutedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    // tin nhắn được ghim (dùng chung cho cả hội thoại)
+    pinnedMessages: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "MessageModel" },
+    ],
   },
   {
     timestamps: true,

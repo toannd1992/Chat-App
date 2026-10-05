@@ -14,6 +14,16 @@ export interface Participant {
 export interface Group {
   name: string;
   createdBy: string;
+  admins?: string[]; // phó nhóm
+}
+
+// tin nhắn được ghim trong hội thoại
+export interface PinnedMessage {
+  _id: string;
+  content: string | null;
+  imgUrl?: string | null;
+  deletedAt?: string | null;
+  senderId?: { _id: string; displayName: string } | null;
 }
 
 export interface LastMessage {
@@ -32,6 +42,9 @@ export interface Conversation {
   seenBy: string[]; //SeenUser[]
   lastMessage: LastMessage | null;
   unreadCounts: Record<string, number>; // key = userId, value = unread count
+  pinnedBy?: string[]; // những người đã ghim hội thoại
+  mutedBy?: string[]; // những người đã tắt thông báo
+  pinnedMessages?: PinnedMessage[];
   createdAt: string;
   updatedAt: string;
 }

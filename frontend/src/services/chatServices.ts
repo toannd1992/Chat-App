@@ -96,6 +96,61 @@ export const chatServices = {
     );
     return res.data;
   },
+  addMembers: async (conversationId: string, memberIds: string[]) => {
+    const res = await api.post(`/conversation/${conversationId}/members`, {
+      memberIds,
+    });
+    return res.data;
+  },
+  removeMember: async (conversationId: string, userId: string) => {
+    const res = await api.post(
+      `/conversation/${conversationId}/members/${userId}/remove`
+    );
+    return res.data;
+  },
+  renameGroup: async (conversationId: string, name: string) => {
+    const res = await api.post(`/conversation/${conversationId}/rename`, {
+      name,
+    });
+    return res.data;
+  },
+  setAdmin: async (conversationId: string, userId: string, admin: boolean) => {
+    const res = await api.post(
+      `/conversation/${conversationId}/admins/${userId}`,
+      { admin }
+    );
+    return res.data;
+  },
+  transferOwner: async (conversationId: string, userId: string) => {
+    const res = await api.post(
+      `/conversation/${conversationId}/transfer/${userId}`
+    );
+    return res.data;
+  },
+  setPersonal: async (
+    conversationId: string,
+    setting: "pin" | "mute",
+    value: boolean
+  ) => {
+    const res = await api.post(
+      `/conversation/${conversationId}/settings/${setting}`,
+      { value }
+    );
+    return res.data;
+  },
+  searchMessages: async (
+    conversationId: string,
+    q: string
+  ): Promise<{ messages: Message[] }> => {
+    const res = await api.get(
+      `/conversation/${conversationId}/search?q=${encodeURIComponent(q)}`
+    );
+    return res.data;
+  },
+  pinMessage: async (messageId: string, pinned: boolean) => {
+    const res = await api.post(`/message/${messageId}/pin`, { pinned });
+    return res.data;
+  },
   deleteConversation: async (conversationId: string, type: string) => {
     const res = await api.post(
       `/conversation/${conversationId}/delete`,
