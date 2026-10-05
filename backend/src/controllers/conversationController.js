@@ -1,9 +1,9 @@
 import { convoRepo } from "../repositories/authRepo.js";
-import { conversationServies } from "../servies/authServies.js";
+import { conversationService } from "../services/conversationService.js";
 
 export const createConversation = async (req, res) => {
   try {
-    const result = await conversationServies.create(req);
+    const result = await conversationService.create(req);
     return res.status(200).json(result);
   } catch (error) {
     const statusCode = error.statusCode || 500;
@@ -14,7 +14,7 @@ export const createConversation = async (req, res) => {
 
 export const getAllConversation = async (req, res) => {
   try {
-    const result = await conversationServies.getAll(req.user);
+    const result = await conversationService.getAll(req.user);
     return res.status(200).json(result);
   } catch (error) {
     const statusCode = error.statusCode || 500;
@@ -25,7 +25,7 @@ export const getAllConversation = async (req, res) => {
 export const getMessage = async (req, res) => {
   // /conversations/${conversationId}/message?limit=${limit}&cursor=${cursor}
   try {
-    const result = await conversationServies.getMess(req);
+    const result = await conversationService.getMess(req);
 
     return res.status(200).json(result);
   } catch (error) {
@@ -48,7 +48,7 @@ export const getConversationSocket = async (userId) => {
 
 export const deleteConversation = async (req, res) => {
   try {
-    const result = await conversationServies.delete(req);
+    const result = await conversationService.delete(req);
     return res.status(200).json(result);
   } catch (error) {
     console.error("Lỗi khi xóa group", error);

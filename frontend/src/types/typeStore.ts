@@ -87,12 +87,12 @@ export interface ChatState {
     content: string,
     conversationId?: string,
     imgUrl?: string | null
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   sendGroupMessStore: (
     content: string,
     conversationId?: string,
     imgUrl?: string | null
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   // add message
   addMessage: (message: Message) => Promise<void>;
   // update conversation

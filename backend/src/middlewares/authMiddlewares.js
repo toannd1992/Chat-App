@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import User from "../models/UserModel.js";
 
 export const protectedRouter = (req, res, next) => {
   try {

@@ -3,7 +3,6 @@ import type { ChatState } from "@/types/typeStore";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useAuthStore } from "./useAuthStore";
-import { useSocketStore } from "./useSocketStore";
 
 export const useChatStore = create<ChatState>()(
   persist(
@@ -97,8 +96,10 @@ export const useChatStore = create<ChatState>()(
               item._id === activeConversationId ? { ...item, seenBy: [] } : item
             ),
           }));
+          return true;
         } catch (error) {
           console.error("Lỗi khi gửi tin nhắn direct", error);
+          return false;
         } finally {
           set({ loadingMessage: false });
         }
@@ -110,7 +111,7 @@ export const useChatStore = create<ChatState>()(
           set({ loadingMessage: true });
           if (!convoId) {
             console.error("Không tìm thấy nhóm để gửi tin nhắn");
-            return;
+            return false;
           }
           await chatServices.sendGroupMess({
             conversationId: convoId,
@@ -122,8 +123,10 @@ export const useChatStore = create<ChatState>()(
               item._id === activeConversationId ? { ...item, seenBy: [] } : item
             ),
           }));
+          return true;
         } catch (error) {
           console.error("lỗi khi gửi tin nhăn group", error);
+          return false;
         } finally {
           set({ loadingMessage: false });
         }
@@ -212,13 +215,9 @@ export const useChatStore = create<ChatState>()(
           if (conversation) {
             const { updateConversation, setActiveConversation, fetchMessages } =
               get();
-            const socket = useSocketStore.getState().socket;
             updateConversation(conversation);
             setActiveConversation(conversation._id);
             fetchMessages(conversation._id);
-
-            // bắn socket
-            socket?.emit("create-group", { conversation });
           }
         } catch (error) {
           console.error("Lỗi khi tạo nhóm chat", error);
@@ -226,22 +225,17 @@ export const useChatStore = create<ChatState>()(
       },
       deleteConversation: async (conversationId, type) => {
         try {
-          const { conversation, type: leave } =
-            await chatServices.deleteConversation(conversationId, type);
+          const { conversation } = await chatServices.deleteConversation(
+            conversationId,
+            type
+          );
 
           if (conversation) {
             const { removeConversation } = get();
-            const socket = useSocketStore.getState().socket;
             removeConversation(conversation);
             set({
               activeConversationId: null,
             });
-            // bắn socket
-            if (leave === "leave_group") {
-              socket?.emit("leave-group", { conversation });
-            } else {
-              socket?.emit("delete-conversation", { conversation });
-            }
           }
         } catch (error) {
           console.error("Lỗi khi tạo nhóm chat", error);

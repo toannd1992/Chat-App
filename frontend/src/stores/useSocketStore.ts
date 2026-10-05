@@ -12,17 +12,51 @@ export const useSocketStore = create<SocketState>((set, get) => ({
   userOnline: [],
 
   connectSocket: () => {
-    const accessToken = useAuthStore.getState().accessToken;
     const isSocket = get().socket;
 
     if (isSocket) return;
 
     const socket: Socket = io(baseURL, {
-      auth: { token: accessToken },
+      // lấy token mới nhất mỗi lần (kể cả khi tự kết nối lại)
+      auth: (cb) => cb({ token: useAuthStore.getState().accessToken }),
       transports: ["websocket"],
     });
 
     set({ socket: socket });
+
+    // token hết hạn thì refresh rồi kết nối lại
+    let refreshing = false;
+    socket.on("connect_error", async (err) => {
+      if (refreshing || !err.message.includes("Token")) return;
+      refreshing = true;
+      try {
+        await useAuthStore.getState().refreshStore();
+        if (useAuthStore.getState().accessToken) socket.connect();
+      } finally {
+        refreshing = false;
+      }
+    });
+
+    // kết nối lại sau khi mất mạng: đồng bộ lại dữ liệu bị bỏ lỡ
+    let hasConnected = false;
+    socket.on("connect", () => {
+      if (hasConnected) {
+        const chat = useChatStore.getState();
+        chat.fetchConversations();
+        const activeId = chat.activeConversationId;
+        if (activeId) {
+          useChatStore.setState((state) => {
+            const rest = { ...state.messages };
+            delete rest[activeId];
+            return { messages: rest };
+          });
+          chat.fetchMessages(activeId);
+        }
+        useFriendStore.getState().getFriendRequests();
+        useFriendStore.getState().getAllFriend();
+      }
+      hasConnected = true;
+    });
 
     // socket.on("connect", () => {
     //   console.log("Đã kết nối với socket");

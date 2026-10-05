@@ -5,108 +5,86 @@ import dotenv from "dotenv";
 import { socketMidleware } from "../middlewares/socketMidleware.js";
 import { getConversationSocket } from "../controllers/conversationController.js";
 import ConversationModel from "../models/ConversationModel.js";
+import { getAllowedOrigins } from "../libs/origins.js";
 
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
 
-const clientUrl = process.env.CLIENT_URL;
-const origins = clientUrl
-  ? [clientUrl, clientUrl.replace("https://", "https://www.")]
-  : [];
-
 const io = new Server(server, {
   cors: {
-    origin: origins,
+    origin: getAllowedOrigins(),
     credentials: true,
   },
 });
 io.use(socketMidleware);
-// lưu lại user online
 
-const userOnline = new Map(); // userIs : socketId
+// userId -> các socketId đang mở (một user có thể mở nhiều tab / thiết bị)
+const userOnline = new Map();
+
+const userRoom = (userId) => `user:${userId}`;
+
+const broadcastOnline = () => {
+  io.emit("user-online", Array.from(userOnline.keys()));
+};
+
+// ===== helper để service gọi: server là bên quyết định phát sự kiện =====
+
+export const emitToUser = (userId, event, payload) => {
+  io.to(userRoom(userId)).emit(event, payload);
+};
+
+export const emitToRoom = (roomId, event, payload, exceptUserId) => {
+  let target = io.to(roomId.toString());
+  if (exceptUserId) target = target.except(userRoom(exceptUserId));
+  target.emit(event, payload);
+};
+
+// cho tất cả socket của các user vào room hội thoại
+export const joinUsersToRoom = (userIds, roomId) => {
+  userIds.forEach((id) => io.in(userRoom(id)).socketsJoin(roomId.toString()));
+};
+
+export const removeUsersFromRoom = (userIds, roomId) => {
+  userIds.forEach((id) => io.in(userRoom(id)).socketsLeave(roomId.toString()));
+};
 
 io.on("connection", async (socket) => {
   const user = socket.user;
-  console.log(`${user.displayName} đã kết nối: ${socket.id}`);
-  userOnline.set(user._id.toString(), socket.id); //luu
+  const userId = user._id.toString();
 
-  io.emit("user-online", Array.from(userOnline.keys()));
+  const sockets = userOnline.get(userId) ?? new Set();
+  sockets.add(socket.id);
+  userOnline.set(userId, sockets);
+
+  socket.join(userRoom(userId));
+  broadcastOnline();
 
   const conversationIds = await getConversationSocket(user._id);
-  conversationIds.forEach((id) => {
-    socket.join(id);
-  });
-  // lắng nghe sự kiên tạo group
-  socket.on("create-group", ({ conversation }) => {
-    socket.join(conversation._id.toString());
+  conversationIds.forEach((id) => socket.join(id));
 
-    // lọc lấy id thành viên trong nhóm và xem có trong danh sách online k
-
-    if (conversation.participants && conversation.participants.length > 0) {
-      conversation.participants.forEach((p) => {
-        const userId = p.userId._id.toString();
-
-        // tìm trong danh sách online
-
-        const memberId = userOnline.get(userId);
-
-        if (memberId) {
-          const memberSocket = io.sockets.sockets.get(memberId);
-
-          if (memberSocket) {
-            memberSocket.join(conversation._id);
-
-            memberSocket.emit("new-group", { conversation });
-          }
-        }
-      });
-    }
-  });
-  // lắng nghe sự kiên xóa conversation
-  socket.on("delete-conversation", ({ conversation }) => {
-    // thông báo trong room
-    socket
-      .to(conversation._id.toString())
-      .emit("remove-conversation", { conversation });
-  });
-  // lắng nghe sự kiên leave-group
-  socket.on("leave-group", ({ conversation }) => {
-    // ra khỏi room
-    socket.leave(conversation._id.toString());
-    // thông báo trong room
-
-    socket
-      .to(conversation._id.toString())
-      .emit("member-leave", { conversation });
-  });
-  // trạng thái đã xem
-  socket.on("mark-as-seen", async ({ conversationId }) => {
+  // trạng thái đã xem (chỉ thành viên của hội thoại mới được đánh dấu)
+  socket.on("mark-as-seen", async ({ conversationId } = {}) => {
     try {
-      // tìm cuộc hội thoại trong DB
+      if (!conversationId) return;
       const conversation = await ConversationModel.findById(conversationId);
       if (!conversation) return;
 
-      const userIdStr = user._id.toString();
+      const isMember = conversation.participants.some(
+        (p) => p.userId.toString() === userId
+      );
+      if (!isMember) return;
 
-      // thêm user hiện tại vào nếu chưa có
-      if (!conversation.seenBy.includes(user._id)) {
+      if (!conversation.seenBy.some((id) => id.toString() === userId)) {
         conversation.seenBy.push(user._id);
       }
-
-      //reset số tin nhắn chưa đọc của user này về 0
-      // Lưu ý: unreadCounts là Map trong Mongoose
       if (conversation.unreadCounts) {
-        conversation.unreadCounts.set(userIdStr, 0);
+        conversation.unreadCounts.set(userId, 0);
       }
-
-      // lưu
       await conversation.save();
 
-      // gửi sự kiện ngược lại cho tất cả client trong phòng
-
-      io.to(conversationId).emit("conversation-seen", {
+      io.to(conversationId.toString()).emit("conversation-seen", {
         conversationId,
         seenBy: conversation.seenBy,
         unreadCounts: conversation.unreadCounts,
@@ -115,84 +93,15 @@ io.on("connection", async (socket) => {
       console.error("lỗi khi mark-as-seen:", error);
     }
   });
-  // lắng nghe sự kiên gửi kết bạn
-  socket.on("friend:send-request", ({ to, request, fromUser }) => {
-    // tìm xem người nhận có trong danh sách online k
-
-    const receiverSocketId = userOnline.get(to.toString());
-
-    // nếu onl thì gửi sự kiện
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("friend:new-request", {
-        ...request,
-        from: {
-          _id: fromUser._id,
-          displayName: fromUser.displayName,
-          email: fromUser.email,
-          avatarUrl: fromUser.avatarUrl,
-        },
-        to: to,
-      });
-    }
-  });
-  // lắng nghe sự kiên accept kết bạn
-  socket.on(
-    "friend:accept-request",
-    ({ id, friend, requestId, conversation }) => {
-      // join vào phòng
-      socket.join(conversation._id.toString());
-      // tìm xem người nhận có trong danh sách online k
-
-      const receiverSocketId = userOnline.get(id.toString());
-
-      if (receiverSocketId) {
-        // nếu onl thì gửi sự kiện báo là đã đồng ý để client thêm vào store
-        io.to(receiverSocketId).emit("new-friend", {
-          friend,
-          requestId,
-          conversation,
-        });
-
-        // lấy đối tượng socket thực tế từ io
-        const socketClient = io.sockets.sockets.get(receiverSocketId);
-        if (socketClient) {
-          socketClient.join(conversation._id);
-        }
-      }
-    }
-  );
-  // lắng nghe sự kiên decline kết bạn
-  socket.on("friend:decline-request", ({ userId, requestId }) => {
-    // tìm xem người nhận có trong danh sách online k
-
-    const receiverSocketId = userOnline.get(userId.toString());
-
-    // nếu onl thì gửi sự kiện
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("decline-friend", {
-        requestId,
-      });
-    }
-  });
-  // lắng nghe sự kiên xóa kết bạn
-  socket.on("friend:delete-request", ({ user, id, conversation }) => {
-    // tìm xem người nhận có trong danh sách online k
-
-    const receiverSocketId = userOnline.get(id.toString());
-
-    // nếu onl thì gửi sự kiện
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("delete-friend", {
-        user,
-        conversation,
-      });
-    }
-  });
 
   socket.on("disconnect", () => {
-    userOnline.delete(user._id.toString()); // xoa
-    io.emit("user-online", Array.from(userOnline.keys()));
-    console.log(`${user.displayName} disconnect: ${socket.id}`);
+    const set = userOnline.get(userId);
+    if (set) {
+      set.delete(socket.id);
+      // chỉ offline khi đã đóng hết các tab
+      if (set.size === 0) userOnline.delete(userId);
+    }
+    broadcastOnline();
   });
 });
 

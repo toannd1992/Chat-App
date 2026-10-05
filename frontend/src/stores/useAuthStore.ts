@@ -7,6 +7,16 @@ import { useChatStore } from "./useChatStore";
 import { useFriendStore } from "./useFriendStore";
 import { useThemeStore } from "./useThemeStore";
 
+// các key do zustand persist lưu
+const PERSIST_KEYS = ["auth-storage", "chat-storage", "friends-storage"];
+const clearPersistedData = () => {
+  try {
+    PERSIST_KEYS.forEach((key) => localStorage.removeItem(key));
+  } catch {
+    // localStorage có thể bị chặn (chế độ riêng tư), bỏ qua
+  }
+};
+
 export const useAuthStore = create<typeStore>()(
   persist(
     (set, get) => ({
@@ -16,7 +26,7 @@ export const useAuthStore = create<typeStore>()(
 
       clearState: () => {
         set({ accessToken: null, user: null, loading: false });
-        localStorage.clear(); // xóa localStorage
+        clearPersistedData(); // chỉ xóa dữ liệu của app, giữ lại các cài đặt khác
         useChatStore.getState().reset(); //reset chatStore
       },
 
@@ -44,7 +54,7 @@ export const useAuthStore = create<typeStore>()(
       signInStore: async (email, password) => {
         try {
           set({ loading: true });
-          localStorage.clear(); // xóa localStorage khi đăng nhập
+          clearPersistedData(); // xóa dữ liệu cũ khi đăng nhập
           useChatStore.getState().reset(); //reset chatStore
           useFriendStore.getState().reset();
           useThemeStore.getState().clearState();

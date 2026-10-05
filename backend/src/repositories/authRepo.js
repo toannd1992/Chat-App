@@ -95,12 +95,13 @@ export const convoRepo = {
   findDirectConvo: async ({ userA, userB }) => {
     return await ConversationModel.findOne({
       type: "direct",
-      participants: {
-        $all: [
-          { "participants.userId": userA },
-          { "participants.userId": userB },
-        ],
-      },
+      $and: [
+        { "participants.userId": userA },
+        { "participants.userId": userB },
+      ],
+    }).populate({
+      path: "participants.userId",
+      select: "displayName avatarUrl",
     });
   },
   createDirectConvo: async ({ userA, userB }) => {

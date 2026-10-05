@@ -1,8 +1,8 @@
-import { messageServies } from "../servies/authServies.js";
+import { messageService } from "../services/messageService.js";
 
 export const sendDirectMess = async (req, res) => {
   try {
-    const result = await messageServies.sendDirect(req);
+    const result = await messageService.sendDirect(req);
 
     return res.status(200).json(result);
   } catch (error) {
@@ -15,7 +15,7 @@ export const sendDirectMess = async (req, res) => {
 
 export const sendGroupMess = async (req, res) => {
   try {
-    const result = await messageServies.sendGroup(req);
+    const result = await messageService.sendGroup(req);
 
     return res.status(200).json(result);
   } catch (error) {

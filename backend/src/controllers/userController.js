@@ -1,8 +1,8 @@
-import { userServies } from "../servies/authServies.js";
+import { userService } from "../services/userService.js";
 
 export const authMeController = async (req, res) => {
   try {
-    const result = await userServies.getMe(req.user);
+    const result = await userService.getMe(req.user);
     return res.status(200).json(result.user);
   } catch (error) {
     const statusCode = error.statusCode || 500;
@@ -15,7 +15,7 @@ export const authMeController = async (req, res) => {
 
 export const updateAvatarController = async (req, res) => {
   try {
-    const result = await userServies.updateAvatar(req);
+    const result = await userService.updateAvatar(req);
 
     return res.status(201).json(result);
   } catch (error) {
@@ -27,7 +27,7 @@ export const updateAvatarController = async (req, res) => {
 
 export const updateProfileController = async (req, res) => {
   try {
-    const result = await userServies.updateProfile(req);
+    const result = await userService.updateProfile(req);
 
     return res.status(200).json(result);
   } catch (error) {
@@ -39,7 +39,7 @@ export const updateProfileController = async (req, res) => {
 
 export const searchUserController = async (req, res) => {
   try {
-    const result = await userServies.searchUser(req);
+    const result = await userService.searchUser(req);
 
     return res.status(200).json(result);
   } catch (error) {

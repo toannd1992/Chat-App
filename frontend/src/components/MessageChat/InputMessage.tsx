@@ -61,10 +61,15 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
   // send tin nhắn
   const handleMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    setValue("");
-    setImgView(null); // set ảnh về null
     if (loadingMessage) return;
     if (!value.trim() && !imgView) return;
+
+    // giữ lại nội dung để khôi phục nếu gửi lỗi
+    const text = value;
+    const image = imgView;
+    setValue("");
+    setImgView(null); // set ảnh về null
+    let sent = false;
     try {
       if (conversation.type === "direct") {
         const recipient = conversation.participants.find(
@@ -73,16 +78,25 @@ const InputMessage = ({ conversation }: { conversation: Conversation }) => {
         const targetUserId = recipient?.userId?._id;
         if (!targetUserId) {
           console.error("Không tìm thấy người nhận");
-          return;
+        } else {
+          sent = await sendDirectMessStore(
+            targetUserId,
+            text,
+            image ?? undefined
+          );
         }
-        await sendDirectMessStore(targetUserId, value, imgView ?? undefined);
       } else {
-        await sendGroupMessStore(value, conversation._id, imgView);
+        sent = await sendGroupMessStore(text, conversation._id, image);
       }
     } catch (error) {
       console.error(error);
-      toast.error("Lỗi xảy ra khi gửi tin nhắn");
     } finally {
+      if (!sent) {
+        // gửi lỗi thì trả lại nội dung để người dùng không phải gõ lại
+        setValue(text);
+        setImgView(image);
+        toast.error("Gửi tin nhắn thất bại, vui lòng thử lại");
+      }
       if (inputRef.current) inputRef.current.value = ""; // xet value = rỗng
       setTimeout(() => {
         inputMessage.current?.focus();

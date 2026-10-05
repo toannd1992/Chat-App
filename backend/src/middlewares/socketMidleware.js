@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import User from "../models/UserModel.js";
 import { authRepo } from "../repositories/authRepo.js";
 
 export const socketMidleware = async (socket, next) => {

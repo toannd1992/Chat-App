@@ -1,10 +1,10 @@
-import { authServies } from "../servies/authServies.js";
+import { authService } from "../services/authService.js";
 
 const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000; //THỜI GIAN HẾT HẠN 14 NGÀY
 
 export const signupController = async (req, res) => {
   try {
-    const result = await authServies.register(req.body);
+    const result = await authService.register(req.body);
     return res.status(200).json(result);
   } catch (error) {
     const statusCode = error.statusCode || 500;
@@ -15,7 +15,7 @@ export const signupController = async (req, res) => {
 
 export const signinController = async (req, res) => {
   try {
-    const result = await authServies.login(req.body);
+    const result = await authService.login(req.body);
     // gửi refreshToken qua cookie
 
     res.cookie("refreshToken", result.refreshToken, {
@@ -37,7 +37,7 @@ export const signinController = async (req, res) => {
 
 export const signoutController = async (req, res) => {
   try {
-    const result = await authServies.logout(req.cookies);
+    const result = await authService.logout(req.cookies);
 
     if (result) {
       res.clearCookie("refreshToken", {
@@ -59,7 +59,7 @@ export const signoutController = async (req, res) => {
 
 export const refreshController = async (req, res) => {
   try {
-    const result = await authServies.refresh(req.cookies);
+    const result = await authService.refresh(req.cookies);
 
     return res.status(200).json(result);
   } catch (error) {

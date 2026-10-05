@@ -1,8 +1,8 @@
-import { friendServies } from "../servies/authServies.js";
+import { friendService } from "../services/friendService.js";
 
 export const sendFriend = async (req, res) => {
   try {
-    const result = await friendServies.send(req);
+    const result = await friendService.send(req);
     return res.status(200).json(result);
   } catch (error) {
     const statusCode = error.statusCode || 500;
@@ -13,7 +13,7 @@ export const sendFriend = async (req, res) => {
 
 export const acceptFriendRequest = async (req, res) => {
   try {
-    const result = await friendServies.accept(req);
+    const result = await friendService.accept(req);
     return res.status(200).json(result);
   } catch (error) {
     const statusCode = error.statusCode || 500;
@@ -24,7 +24,7 @@ export const acceptFriendRequest = async (req, res) => {
 
 export const declineFriendRequest = async (req, res) => {
   try {
-    const result = await friendServies.decline(req);
+    const result = await friendService.decline(req);
 
     return res.status(200).json(result);
   } catch (error) {
@@ -35,7 +35,7 @@ export const declineFriendRequest = async (req, res) => {
 };
 export const cancelFriendRequest = async (req, res) => {
   try {
-    const result = await friendServies.cancel(req);
+    const result = await friendService.cancel(req);
 
     return res.status(200).json(result);
   } catch (error) {
@@ -47,7 +47,7 @@ export const cancelFriendRequest = async (req, res) => {
 
 export const getAllFriends = async (req, res) => {
   try {
-    const result = await friendServies.getAll(req.user);
+    const result = await friendService.getAll(req.user);
 
     return res.status(200).json(result);
   } catch (error) {
@@ -59,7 +59,7 @@ export const getAllFriends = async (req, res) => {
 
 export const getFriendsRequest = async (req, res) => {
   try {
-    const result = await friendServies.getReq(req.user);
+    const result = await friendService.getReq(req.user);
 
     return res.status(200).json(result);
   } catch (error) {
@@ -71,7 +71,7 @@ export const getFriendsRequest = async (req, res) => {
 
 export const deleteFriend = async (req, res) => {
   try {
-    const result = await friendServies.delete(req);
+    const result = await friendService.delete(req);
 
     return res.status(200).json(result);
   } catch (error) {

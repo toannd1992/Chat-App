@@ -2,8 +2,6 @@ import { friendServices } from "@/services/friendServices";
 import type { FriendState } from "@/types/typeStore";
 import { create } from "zustand";
 import { useChatStore } from "./useChatStore";
-import { useSocketStore } from "./useSocketStore";
-import { useAuthStore } from "./useAuthStore";
 import { persist } from "zustand/middleware";
 
 export const useFriendStore = create<FriendState>()(
@@ -49,16 +47,6 @@ export const useFriendStore = create<FriendState>()(
             requestFrom: [...state.requestFrom, res.request],
           }));
 
-          // gửi socket
-          const socket = useSocketStore.getState().socket; // lấy socket
-          const user = useAuthStore.getState().user; // lấy thông tin của người gửi
-          if (socket && res.request) {
-            socket.emit("friend:send-request", {
-              to: recipientId,
-              request: res.request,
-              fromUser: user,
-            });
-          }
         } catch (error) {
           console.error("Lỗi khi gửi lời mời kết bạn", error);
         }
@@ -78,7 +66,7 @@ export const useFriendStore = create<FriendState>()(
         try {
           set({ loading: true });
 
-          const { conversation, from, friend, requestId } =
+          const { conversation, from, requestId } =
             await friendServices.acceptFriend(id);
           useChatStore.getState().updateConversation(conversation);
           useChatStore.getState().setActiveConversation(conversation._id);
@@ -89,14 +77,6 @@ export const useFriendStore = create<FriendState>()(
             addFriend(from);
             setRequest(requestId);
 
-            const socket = useSocketStore.getState().socket;
-
-            socket?.emit("friend:accept-request", {
-              id: from._id,
-              friend,
-              requestId,
-              conversation,
-            });
           }
         } catch (error) {
           console.log(error);
@@ -107,16 +87,10 @@ export const useFriendStore = create<FriendState>()(
       declineFriend: async (id) => {
         try {
           set({ loading: true });
-          const { userId, requestId } = await friendServices.declineFriend(id);
+          const { requestId } = await friendServices.declineFriend(id);
           const { setRequest } = get();
           if (requestId) {
             setRequest(requestId);
-            const socket = useSocketStore.getState().socket;
-
-            socket?.emit("friend:decline-request", {
-              userId,
-              requestId,
-            });
           }
         } catch (error) {
           console.log(error);
@@ -127,16 +101,10 @@ export const useFriendStore = create<FriendState>()(
       cancelFriend: async (id) => {
         try {
           set({ loading: true });
-          const { userId, requestId } = await friendServices.cancelFriend(id);
+          const { requestId } = await friendServices.cancelFriend(id);
           const { setRequest } = get();
           if (requestId) {
             setRequest(requestId);
-            const socket = useSocketStore.getState().socket;
-
-            socket?.emit("friend:decline-request", {
-              userId,
-              requestId,
-            });
           }
         } catch (error) {
           console.log(error);
@@ -170,13 +138,6 @@ export const useFriendStore = create<FriendState>()(
             const { removeFriend } = get();
             removeFriend(otherUser._id.toString());
 
-            // bắn socket
-            const socket = useSocketStore.getState().socket;
-            socket?.emit("friend:delete-request", {
-              user,
-              id: otherUser._id,
-              conversation,
-            });
           }
         } catch (error) {
           console.log(error);
