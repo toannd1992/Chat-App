@@ -27,6 +27,7 @@ export interface typeStore {
   }) => Promise<void>;
   seachUser: (keyword: string) => Promise<typeUser>;
   signOutStore: () => Promise<void>;
+  signOutAllStore: () => Promise<void>;
   fetchMeStore: () => Promise<void>;
   refreshStore: () => Promise<void>;
 }

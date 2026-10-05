@@ -41,6 +41,11 @@ export const emitToRoom = (roomId, event, payload, exceptUserId) => {
   target.emit(event, payload);
 };
 
+// ngắt mọi kết nối socket của một người (khi đăng xuất khỏi mọi thiết bị)
+export const disconnectUser = (userId) => {
+  io.in(userRoom(userId)).disconnectSockets(true);
+};
+
 // cho tất cả socket của các user vào room hội thoại
 export const joinUsersToRoom = (userIds, roomId) => {
   userIds.forEach((id) => io.in(userRoom(id)).socketsJoin(roomId.toString()));

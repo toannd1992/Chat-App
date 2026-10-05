@@ -92,6 +92,18 @@ export const useAuthStore = create<typeStore>()(
         }
       },
 
+      // đăng xuất khỏi mọi thiết bị (kể cả thiết bị này)
+      signOutAllStore: async () => {
+        try {
+          await authServices.signOutAll();
+          get().clearState();
+          toast.success("Đã đăng xuất khỏi mọi thiết bị");
+        } catch (error) {
+          console.error("Lỗi khi đăng xuất mọi thiết bị", error);
+          toast.error("Thao tác thất bại, vui lòng thử lại");
+        }
+      },
+
       fetchMeStore: async () => {
         try {
           set({ loading: true });

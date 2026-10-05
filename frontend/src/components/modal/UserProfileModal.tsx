@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import imageCompression from "browser-image-compression";
 import { Spinner } from "../ui/spinner";
 import { formatDate } from "@/lib/utils";
+import SecuritySection from "./SecuritySection";
 
 import {
   Dialog,
@@ -146,7 +147,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className=" sm:max-w-[400px] p-0 overflow-hidden gap-0 border-border">
+      <DialogContent className=" sm:max-w-[400px] p-0 overflow-y-auto max-h-[92vh] gap-0 border-border">
         <DialogHeader className="min-h-10 items-center justify-center">
           <DialogTitle className="text-center">Thông tin tài khoản</DialogTitle>
           <DialogDescription />
@@ -312,6 +313,11 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* bảo mật */}
+        <div className="px-6 pb-2">
+          <SecuritySection />
         </div>
 
         {/* footer */}

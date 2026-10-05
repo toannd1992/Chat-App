@@ -30,6 +30,18 @@ export const authServices = {
     return res.data;
   },
 
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    const res = await api.post("/users/password", {
+      currentPassword,
+      newPassword,
+    });
+    return res.data;
+  },
+
+  signOutAll: async () => {
+    return await api.post("/users/logout-all");
+  },
+
   signOut: async () => {
     return await api.post("/auth/signout", {}, { withCredentials: true });
   },

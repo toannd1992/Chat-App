@@ -13,6 +13,10 @@ export const authRepo = {
   infoUserId: async ({ _id }) => {
     return await User.findById(_id).select("-hashedPassword");
   },
+  // lấy cả mật khẩu đã băm (chỉ dùng khi đổi mật khẩu)
+  findByIdWithPassword: async (_id) => {
+    return await User.findById(_id);
+  },
   findEmail: async ({ email }) => {
     return await User.findOne({ email });
   },
@@ -35,6 +39,12 @@ export const sesstionRepo = {
   },
   findOneSesstion: async ({ refreshToken }) => {
     return await Sesstion.findOne({ refreshToken });
+  },
+  // xóa mọi phiên của người dùng, có thể giữ lại một phiên (thiết bị hiện tại)
+  deleteSessionsOfUser: async ({ userId, keepRefreshToken }) => {
+    const filter = { userId };
+    if (keepRefreshToken) filter.refreshToken = { $ne: keepRefreshToken };
+    return await Sesstion.deleteMany(filter);
   },
 };
 export const friendRepo = {

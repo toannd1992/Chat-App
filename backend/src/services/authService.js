@@ -58,7 +58,7 @@ export const authService = {
     };
   },
   login: async ({ email, password }) => {
-    if (!email || !password || typeof email !== "string") {
+    if (!email || !password || typeof email !== "string" || typeof password !== "string") {
       throw new AppError(400, "Thiếu email hoặc password");
     }
     // tim username

@@ -40,6 +40,9 @@ const authLimiter = rateLimit({
   message: { message: "Thử quá nhiều lần, vui lòng quay lại sau" },
 });
 
+// đổi mật khẩu cần mật khẩu cũ nên cũng giới hạn số lần thử
+app.use("/api/users/password", authLimiter);
+
 // public router
 
 app.use("/api/auth", authLimiter, authRoute);
