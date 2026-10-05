@@ -22,6 +22,10 @@ export const protectedRouter = (req, res, next) => {
 
     next();
   } catch (error) {
+    // token hết hạn hoặc không hợp lệ -> 403 để frontend gọi refresh
+    if (error.name === "TokenExpiredError" || error.name === "JsonWebTokenError") {
+      return res.status(403).json({ message: "Token hết hạn hoặc không hợp lệ" });
+    }
     console.error("lỗi khi xác thực Middlewares", error);
     return res.status(500).json({ message: " lỗi hệ thống Unauthorized" });
   }

@@ -24,6 +24,9 @@ app.use(express.urlencoded({ limit: "50mb", extended: true })); // tăng giới 
 app.use(cookieParser()); // lấy cookie từ req
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 
+// health check cho Render / cron ping
+app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
+
 // public router
 
 app.use("/api/auth", authRoute);

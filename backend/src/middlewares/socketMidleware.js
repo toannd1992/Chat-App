@@ -30,6 +30,6 @@ export const socketMidleware = async (socket, next) => {
     });
   } catch (error) {
     console.error("lỗi khi xác thực socketMiddlewares", error);
-    return res.status(500).json({ message: " lỗi hệ thống" });
+    return next(new Error("Lỗi hệ thống"));
   }
 };

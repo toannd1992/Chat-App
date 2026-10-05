@@ -334,13 +334,14 @@ export const friendServies = {
     });
 
     if (existed) {
+      const me = await authRepo.infoUserId({ _id: userId });
       return {
         conversation: existed,
         from,
         friend: {
           _id: userId,
-          displayName: req.user.displayName,
-          avatarUrl: req.user.avatarUrl,
+          displayName: me.displayName,
+          avatarUrl: me.avatarUrl,
         },
         requestId, // id lời mời
       };
@@ -549,11 +550,7 @@ export const conversationServies = {
     const { conversationId } = params;
     const { limit = 20, cursor } = query;
 
-    if (cursor) {
-      query.createdAt = { $lt: new Date(cursor) };
-    }
-
-    let message = await messRepo.findMessage({ conversationId, limit });
+    let message = await messRepo.findMessage({ conversationId, limit, cursor });
 
     let nextCursor = null;
 

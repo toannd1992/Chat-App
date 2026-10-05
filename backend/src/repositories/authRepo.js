@@ -225,8 +225,10 @@ export const messRepo = {
   delete: async ({ conversationId }) => {
     await MessageModel.deleteMany({ conversationId });
   },
-  findMessage: async ({ conversationId, limit }) => {
-    return await MessageModel.find({ conversationId })
+  findMessage: async ({ conversationId, limit, cursor }) => {
+    const filter = { conversationId };
+    if (cursor) filter.createdAt = { $lt: new Date(cursor) };
+    return await MessageModel.find(filter)
       .populate("senderId", "displayName avatarUrl email")
       .sort({ createdAt: -1 })
       .limit(Number(limit) + 1);

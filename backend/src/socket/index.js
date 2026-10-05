@@ -12,7 +12,9 @@ const app = express();
 const server = http.createServer(app);
 
 const clientUrl = process.env.CLIENT_URL;
-const origins = [clientUrl, clientUrl.replace("https://", "https://www.")];
+const origins = clientUrl
+  ? [clientUrl, clientUrl.replace("https://", "https://www.")]
+  : [];
 
 const io = new Server(server, {
   cors: {
