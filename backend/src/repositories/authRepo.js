@@ -4,6 +4,7 @@ import FriendRequestModel from "../models/FriendRequestModel.js";
 import MessageModel from "../models/MessageModel.js";
 import Sesstion from "../models/SesstionModel.js";
 import User from "../models/UserModel.js";
+import { previewOfMessage } from "../libs/upload.js";
 
 export const authRepo = {
   existUser: async ({ _id }) => {
@@ -98,7 +99,7 @@ const conversationPopulate = [
   { path: "seenBy", select: "displayName avatarUrl" },
   {
     path: "pinnedMessages",
-    select: "content imgUrl senderId deletedAt createdAt",
+    select: "content imgUrl attachments senderId deletedAt createdAt",
     populate: { path: "senderId", select: "displayName" },
   },
 ];
@@ -226,7 +227,7 @@ export const convoRepo = {
         lastMessageAt: message.createdAt,
         lastMessage: {
           _id: message._id,
-          content: message.content || (message.imgUrl ? "[Hình ảnh]" : ""),
+          content: previewOfMessage(message),
           senderId: isSenderId,
           createdAt: message.createdAt,
         },
@@ -259,7 +260,7 @@ const messagePopulate = [
   { path: "senderId", select: "displayName avatarUrl email" },
   {
     path: "replyTo",
-    select: "content imgUrl senderId deletedAt",
+    select: "content imgUrl attachments senderId deletedAt",
     populate: { path: "senderId", select: "displayName" },
   },
 ];
@@ -292,12 +293,20 @@ export const messRepo = {
       .sort({ createdAt: -1 })
       .limit(Number(limit) + 1);
   },
-  create: async ({ conversationId, content, senderId, imgUrl, replyTo }) => {
+  create: async ({
+    conversationId,
+    content,
+    senderId,
+    imgUrl,
+    attachments,
+    replyTo,
+  }) => {
     return await MessageModel.create({
       conversationId,
       senderId,
       content: content || "",
       imgUrl,
+      attachments: attachments || [],
       replyTo: replyTo || null,
     }).then((data) => data.populate(messagePopulate));
   },

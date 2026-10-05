@@ -22,6 +22,7 @@ export interface PinnedMessage {
   _id: string;
   content: string | null;
   imgUrl?: string | null;
+  attachments?: Attachment[];
   deletedAt?: string | null;
   senderId?: { _id: string; displayName: string } | null;
 }
@@ -53,6 +54,16 @@ export interface ConversationResponse {
   conversations: Conversation[];
 }
 
+// ảnh / tệp / tin nhắn thoại đính kèm
+export interface Attachment {
+  kind: "image" | "file" | "audio";
+  url: string;
+  name: string;
+  size: number;
+  mime: string;
+  duration?: number;
+}
+
 export interface MessageReaction {
   userId: string;
   emoji: string;
@@ -63,6 +74,7 @@ export interface ReplyPreview {
   _id: string;
   content: string | null;
   imgUrl?: string | null;
+  attachments?: Attachment[];
   deletedAt?: string | null;
   senderId?: { _id: string; displayName: string } | null;
 }
@@ -76,6 +88,7 @@ export interface Message {
   updatedAt?: string | null;
   createdAt: string;
   isOwn?: boolean;
+  attachments?: Attachment[];
   replyTo?: ReplyPreview | null;
   editedAt?: string | null;
   deletedAt?: string | null;

@@ -3,10 +3,8 @@ import { ChevronDown, ChevronUp, Pin, PinOff } from "lucide-react";
 import { toast } from "sonner";
 import { apiError } from "@/lib/utils";
 import { chatServices } from "@/services/chatServices";
-import type { Conversation, PinnedMessage } from "@/types/typeChat";
-
-const previewOf = (m: PinnedMessage) =>
-  m.content || (m.imgUrl ? "[Hình ảnh]" : "");
+import { previewOfMessage } from "@/lib/attachments";
+import type { Conversation } from "@/types/typeChat";
 
 // thanh hiển thị các tin nhắn đã ghim ở đầu cuộc trò chuyện
 const PinnedBar = ({ convo }: { convo: Conversation }) => {
@@ -35,7 +33,7 @@ const PinnedBar = ({ convo }: { convo: Conversation }) => {
             <span className="font-semibold">
               {m.senderId?.displayName ?? ""}:{" "}
             </span>
-            <span className="text-muted-foreground">{previewOf(m)}</span>
+            <span className="text-muted-foreground">{previewOfMessage(m)}</span>
           </div>
           <button
             type="button"

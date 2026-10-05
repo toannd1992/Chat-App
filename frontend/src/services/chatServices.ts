@@ -1,5 +1,6 @@
 import api from "@/lib/axios";
 import type { ConversationResponse, Message } from "@/types/typeChat";
+import type { OutgoingAttachment } from "@/lib/attachments";
 
 interface IFetchMessage {
   mess: Message[];
@@ -9,16 +10,24 @@ interface IsendDirectMess {
   recipientId: string;
   conversationId?: string;
   content: string;
-  imgUrl?: string | null;
+  attachments?: OutgoingAttachment[];
   replyTo?: string | null;
 }
 
 interface IsendGroupMess {
   conversationId?: string;
   content: string;
-  imgUrl?: string | null;
+  attachments?: OutgoingAttachment[];
   replyTo?: string | null;
 }
+
+// chỉ gửi những trường server cần
+const toPayload = (attachments?: OutgoingAttachment[]) =>
+  attachments?.map(({ dataUrl, name, duration }) => ({
+    dataUrl,
+    name,
+    duration,
+  }));
 
 interface ICreateConversation {
   type: string;
@@ -46,14 +55,14 @@ export const chatServices = {
     recipientId,
     conversationId,
     content,
-    imgUrl,
+    attachments,
     replyTo,
   }: IsendDirectMess) {
     const res = await api.post("/message/direct", {
       recipientId,
       conversationId,
       content,
-      imgUrl,
+      attachments: toPayload(attachments),
       replyTo,
     });
     return res.data;
@@ -61,13 +70,13 @@ export const chatServices = {
   async sendGroupMess({
     conversationId,
     content,
-    imgUrl,
+    attachments,
     replyTo,
   }: IsendGroupMess) {
     const res = await api.post("/message/group", {
       conversationId,
       content,
-      imgUrl,
+      attachments: toPayload(attachments),
       replyTo,
     });
     return res.data;

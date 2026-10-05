@@ -1,6 +1,7 @@
 import type { Socket } from "socket.io-client";
 import type { Conversation, LastMessage, Message } from "./typeChat";
 import type { FriendRequest, typeUser } from "./typeUser";
+import type { OutgoingAttachment } from "@/lib/attachments";
 
 export interface typeStore {
   accessToken: string | null;
@@ -87,13 +88,13 @@ export interface ChatState {
   sendDirectMessStore: (
     recipientId: string,
     content: string,
-    imgUrl?: string | null,
+    attachments?: OutgoingAttachment[],
     replyTo?: string | null
   ) => Promise<boolean>;
   sendGroupMessStore: (
     content: string,
     conversationId?: string,
-    imgUrl?: string | null,
+    attachments?: OutgoingAttachment[],
     replyTo?: string | null
   ) => Promise<boolean>;
   // trả lời / sửa / thu hồi / cảm xúc

@@ -1,7 +1,7 @@
 import validator from "validator";
 import { authRepo, friendRepo, requestRepo } from "../repositories/authRepo.js";
 import AppError from "../libs/appError.js";
-import cloudinary from "../libs/cloudinary.js";
+import { uploadImageOnly } from "../libs/upload.js";
 
 export const userService = {
   getMe: async ({ _id }) => {
@@ -20,9 +20,9 @@ export const userService = {
 
     // nếu có avatar thì upload ảnh
     if (avatar) {
-      const upload = await cloudinary.uploader.upload(avatar);
-      avatarUrl = upload.secure_url;
-      avatarId = upload.public_id;
+      const upload = await uploadImageOnly(avatar);
+      avatarUrl = upload.url;
+      avatarId = upload.publicId;
     }
 
     // tìm user trong db

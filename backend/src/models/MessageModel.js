@@ -19,6 +19,21 @@ const messageSchema = new mongoose.Schema(
     imgUrl: {
       type: String,
     },
+    // ảnh / tệp / tin nhắn thoại đính kèm
+    attachments: {
+      type: [
+        {
+          kind: { type: String, enum: ["image", "file", "audio"] },
+          url: { type: String },
+          name: { type: String },
+          size: { type: Number },
+          mime: { type: String },
+          duration: { type: Number }, // giây, chỉ dùng cho tin nhắn thoại
+          _id: false,
+        },
+      ],
+      default: [],
+    },
     // trả lời một tin nhắn khác
     replyTo: {
       type: mongoose.Schema.Types.ObjectId,

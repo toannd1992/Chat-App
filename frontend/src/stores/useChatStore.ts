@@ -90,7 +90,7 @@ export const useChatStore = create<ChatState>()(
           set({ loadingMessage: false });
         }
       },
-      sendDirectMessStore: async (recipientId, content, imgUrl, replyTo) => {
+      sendDirectMessStore: async (recipientId, content, attachments, replyTo) => {
         try {
           set({ loadingMessage: true });
           const { activeConversationId } = get();
@@ -99,7 +99,7 @@ export const useChatStore = create<ChatState>()(
             conversationId: activeConversationId || undefined,
             recipientId,
             content,
-            imgUrl,
+            attachments,
             replyTo,
           });
           set({ replyingTo: null });
@@ -116,7 +116,7 @@ export const useChatStore = create<ChatState>()(
           set({ loadingMessage: false });
         }
       },
-      sendGroupMessStore: async (content, conversationId, imgUrl, replyTo) => {
+      sendGroupMessStore: async (content, conversationId, attachments, replyTo) => {
         try {
           const { activeConversationId } = get();
           const convoId = conversationId || activeConversationId;
@@ -128,7 +128,7 @@ export const useChatStore = create<ChatState>()(
           await chatServices.sendGroupMess({
             conversationId: convoId,
             content,
-            imgUrl,
+            attachments,
             replyTo,
           });
           set({ replyingTo: null });

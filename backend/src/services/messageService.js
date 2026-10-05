@@ -2,8 +2,17 @@ import mongoose from "mongoose";
 import { io, emitToRoom } from "../socket/index.js";
 import { convoRepo, messRepo } from "../repositories/authRepo.js";
 import AppError from "../libs/appError.js";
-import cloudinary from "../libs/cloudinary.js";
+import { uploadAttachments } from "../libs/upload.js";
 import { emitMessage } from "../helpers/messageHelper.js";
+
+// body.attachments là danh sách mới; imgUrl (một ảnh base64) là kiểu cũ vẫn được hỗ trợ
+const normalizeAttachments = (body) => {
+  if (Array.isArray(body.attachments)) return body.attachments;
+  if (typeof body.imgUrl === "string" && body.imgUrl) {
+    return [{ dataUrl: body.imgUrl }];
+  }
+  return [];
+};
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "😡"];
 const MAX_CONTENT = 5000;
@@ -91,6 +100,7 @@ export const messageService = {
     if (!message.deletedAt) {
       message.content = "";
       message.imgUrl = null;
+      message.attachments = [];
       message.reactions = [];
       message.editedAt = null;
       message.deletedAt = new Date();
@@ -129,28 +139,17 @@ export const messageService = {
   },
 
   sendDirect: async ({ body, user }) => {
-    const { recipientId, conversationId, content, imgUrl: image, replyTo } = body;
+    const { recipientId, conversationId, content, replyTo } = body;
+    const rawAttachments = normalizeAttachments(body);
     const senderId = user._id;
 
     let conversation;
-    // nếu k có conten và ảnh
-    if (!content && !image) {
-      throw new AppError(400, "Nội dung và ảnh không thể để trống");
+    // nếu k có nội dung và tệp đính kèm
+    if (!content && rawAttachments.length === 0) {
+      throw new AppError(400, "Nội dung và tệp đính kèm không thể để trống");
     }
     if (content && content.length > MAX_CONTENT) {
       throw new AppError(400, "Tin nhắn quá dài");
-    }
-    // kiểm tra ảnh nếu có thì upload
-    let imgUrl = null;
-    // let contentImg = "";
-    if (image) {
-      try {
-        const upload = await cloudinary.uploader.upload(image);
-        imgUrl = upload.secure_url;
-        // contentImg = "Hình ảnh";
-      } catch (error) {
-        throw new AppError(500, "Lỗi upload ảnh");
-      }
     }
     // tim conversation (phải là hội thoại của chính người gửi và người nhận)
     if (conversationId) {
@@ -181,11 +180,14 @@ export const messageService = {
       });
     }
 
+    // đã kiểm tra quyền xong mới upload
+    const attachments = await uploadAttachments(rawAttachments);
+
     const message = await messRepo.create({
       conversationId: conversation._id,
       senderId: senderId,
       content,
-      imgUrl,
+      attachments,
       replyTo: await resolveReplyTo(replyTo, conversation._id),
     });
 
@@ -204,27 +206,24 @@ export const messageService = {
   },
 
   sendGroup: async ({ body, user, conversation }) => {
-    const { conversationId, content, imgUrl: image, replyTo } = body;
+    const { content, replyTo } = body;
+    const rawAttachments = normalizeAttachments(body);
 
     const senderId = user._id; //req.user._id;
     // được lưu lại vào trong req từ middleware
 
-    if (!content && !image) {
-      throw new AppError(400, "Nội dung và ảnh không thể để trống");
+    if (!content && rawAttachments.length === 0) {
+      throw new AppError(400, "Nội dung và tệp đính kèm không thể để trống");
     }
-    // kiểm tra ảnh nếu có thì upload
-    let imgUrl = null;
-    // let contentImg = "";
-    if (image) {
-      const upload = await cloudinary.uploader.upload(image);
-      imgUrl = upload.secure_url;
-      // contentImg = "Hình ảnh";
+    if (content && content.length > MAX_CONTENT) {
+      throw new AppError(400, "Tin nhắn quá dài");
     }
+    const attachments = await uploadAttachments(rawAttachments);
     const message = await messRepo.create({
       conversationId: conversation._id,
       senderId: senderId,
       content,
-      imgUrl,
+      attachments,
       replyTo: await resolveReplyTo(replyTo, conversation._id),
     });
 

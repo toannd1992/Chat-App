@@ -3,6 +3,8 @@ import { Pencil, Pin, PinOff, Reply, Smile, Undo2 } from "lucide-react";
 import { chatServices } from "@/services/chatServices";
 import { toast } from "sonner";
 import { apiError } from "@/lib/utils";
+import { previewOfMessage } from "@/lib/attachments";
+import AttachmentList from "./AttachmentList";
 import UserAvatar from "@/chat/UserAvatar";
 import { cn, formatMessageTime } from "@/lib/utils";
 import type { Conversation, Message } from "@/types/typeChat";
@@ -113,8 +115,25 @@ const MessageItem = ({
   const replyText = reply
     ? reply.deletedAt
       ? RECALLED_TEXT
-      : reply.content || (reply.imgUrl ? "[Hình ảnh]" : "")
+      : previewOfMessage(reply)
     : "";
+
+  // ảnh gửi theo kiểu cũ (imgUrl) vẫn hiển thị như một ảnh đính kèm
+  const attachments = [
+    ...(message.imgUrl
+      ? [
+          {
+            kind: "image" as const,
+            url: message.imgUrl,
+            name: "Hình ảnh",
+            size: 0,
+            mime: "image/*",
+          },
+        ]
+      : []),
+    ...(message.attachments ?? []),
+  ];
+  const hasImage = attachments.some((a) => a.kind === "image");
 
   const actionBtn =
     "p-1 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer";
@@ -167,7 +186,7 @@ const MessageItem = ({
                 "p-2 px-3 rounded shadow-sm",
                 isRecalled
                   ? "bg-transparent border border-dashed text-muted-foreground italic"
-                  : message.isOwn && !message.imgUrl
+                  : message.isOwn && !hasImage
                   ? "chat-bubble-sent border-0"
                   : !message.isOwn && "bg-chat-bubble-received"
               )}
@@ -185,19 +204,14 @@ const MessageItem = ({
                       <p className="truncate">{replyText}</p>
                     </div>
                   )}
-                  {/* hiển thị ảnh */}
-                  {message.imgUrl && (
-                    <a
-                      href={message.imgUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <img
-                        className="w-40 h-auto  cursor-pointer"
-                        src={message.imgUrl}
-                        alt={message._id}
-                      ></img>
-                    </a>
+                  {/* ảnh, tệp, tin nhắn thoại */}
+                  {attachments.length > 0 && (
+                    <div className={cn(message.content && "mb-1")}>
+                      <AttachmentList
+                        attachments={attachments}
+                        isOwn={message.isOwn}
+                      />
+                    </div>
                   )}
                   {/* hiển thị nội dung */}
                   <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
